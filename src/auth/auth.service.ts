@@ -14,16 +14,17 @@ export class AuthService {
     const user = await this.usersService.findOneByEmail(email);
     // Проверяем, существует ли пользователь и совпадает ли пароль
     if (user && (await bcrypt.compare(pass, user.password))) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { password, ...result } = user;
       return result;
     }
     return null;
   }
 
-  login(user: any) {
+  async login(user: any) {
     const payload = { email: user.email, sub: user.id, roles: user.roles };
-    return {
+    return await Promise.resolve({
       access_token: this.jwtService.sign(payload),
-    };
+    });
   }
 }
