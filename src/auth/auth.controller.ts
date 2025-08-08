@@ -37,11 +37,11 @@ export class AuthController {
   // Пример защищенного маршрута
   @UseGuards(AuthGuard('jwt'))
   @Post('profile')
-  getProfile(@Request() req: { user: Omit<User, 'password'> }) {
+  async getProfile(@Request() req: { user: Omit<User, 'password'> }) {
     if (!req.user.email) {
       return { error: 'Email is missing from user object' };
     }
-    const user = this.usersService.findOneByEmail(req.user.email);
+    const user = await this.usersService.findOneByEmail(req.user.email);
     if (user) {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { password, ...result } = user;

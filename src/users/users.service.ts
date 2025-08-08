@@ -17,8 +17,8 @@ export class UsersService {
     },
   ];
 
-  findOneByEmail(email: string): User | undefined {
-    return this.users.find((user) => user.email === email);
+  async findOneByEmail(email: string): Promise<User | undefined> {
+    return Promise.resolve(this.users.find((user) => user.email === email));
   }
 
   async generate_password_hash(password: string): Promise<string> {
