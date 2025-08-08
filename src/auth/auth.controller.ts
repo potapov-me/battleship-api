@@ -1,16 +1,39 @@
-import { Controller, Get } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import {
+  Controller,
+  Post,
+  Body,
+  UseGuards,
+  Request,
+  Get,
+  Param,
+} from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
+import { AuthService } from './auth.service';
+import { UsersService } from '../users/users.service';
+import { LoginDto } from './dto/login.dto';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly configService: ConfigService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly usersService: UsersService,
+  ) {}
 
-  @Get('jwt-secret')
-  getJwtSecret(): string {
-    const secret = this.configService.get<string>('JWT_SECRET');
-    if (!secret) {
-      throw new Error('JWT_SECRET is not defined in configuration');
-    }
-    return secret;
+  @UseGuards(AuthGuard('local'))
+  @Post('login')
+  async login(@Body() loginDto: LoginDto, @Request() req: { user: any }) {
+    return this.authService.login(req.user);
+  }
+
+  @Get('password/:password')
+  async getPasswordHash(@Param('password') password: string, @Request() req) {
+    return this.usersService.generate_password_hash(password);
+  }
+
+  // Пример защищенного маршрута
+  @UseGuards(AuthGuard('jwt'))
+  @Post('profile')
+  getProfile(@Request() req) {
+    return req.user;
   }
 }
