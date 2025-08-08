@@ -65,7 +65,9 @@ export class GameService {
     // 5. Check if a ship is hit or sunk
     // 6. Check for win condition
     // 7. Switch turns
-    console.log(`User ${userId} in game ${gameId} made a shot at (${x}, ${y}).`);
+    console.log(
+      `User ${userId} in game ${gameId} made a shot at (${x}, ${y}).`,
+    );
     return { hit: false, sunk: null }; // Example response
   }
 
