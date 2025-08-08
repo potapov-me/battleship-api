@@ -4,8 +4,8 @@ import { AppService } from './app.service';
 // import { PlayersModule } from './players/players.module';
 // import { GameModule } from './game/game.module';
 import { AuthModule } from './auth/auth.module';
-import { UsersModule } from './users/users.module';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+// import { UsersModule } from './users/users.module';
+import { ConfigModule } from '@nestjs/config';
 // import { TypeOrmModule } from '@nestjs/typeorm';
 
 @Module({
@@ -24,11 +24,11 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
     //     entities: [], // убедитесь, что User импортирован
     //     synchronize: configService.get<boolean>('DB_SYNCHRONIZE'),
     //   }),
-    }),
+    // }),
     // PlayersModule,
     // GameModule,
     AuthModule,
-    UsersModule,
+    // UsersModule,
   ],
   controllers: [AppController],
   providers: [AppService],
