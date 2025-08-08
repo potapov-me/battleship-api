@@ -12,6 +12,7 @@ import { AuthService } from './auth.service';
 import { UsersService } from '../users/users.service';
 import { RegisterDto } from './dto/register.dto';
 import { User } from 'src/users/schemas/user.schema';
+import { LoginDto } from 'src/auth/dto/login.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -22,8 +23,8 @@ export class AuthController {
 
   @UseGuards(AuthGuard('local'))
   @Post('login')
-  login(@Request() req: { user: Omit<User, 'password'> }) {
-    return this.authService.login(req.user);
+  login(@Body() login: LoginDto) {
+    return this.authService.login(login);
   }
 
   @Post('register')
@@ -37,7 +38,6 @@ export class AuthController {
       return result;
     } catch (error) {
       return {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
         error: error.message,
       };
     }

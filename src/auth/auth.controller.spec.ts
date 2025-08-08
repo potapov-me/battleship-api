@@ -60,57 +60,45 @@ describe('AuthController', () => {
 
   describe('login', () => {
     it('should return an access token for valid user', () => {
-      const user = {
-        _id: '507f1f77bcf86cd799439011',
-        id: '507f1f77bcf86cd799439011',
-        username: 'test',
+      const loginDto = {
         email: 'test@test.com',
-        roles: ['user'],
-      } as any;
-      const req = { user };
-
+        password: 'password123',
+      };
       const expectedToken = { access_token: 'test_token' };
       (authService.login as jest.Mock).mockReturnValue(expectedToken);
 
-      const result = controller.login(req);
+      const result = controller.login(loginDto);
       
       expect(result).toEqual(expectedToken);
-      expect(authService.login).toHaveBeenCalledWith(user);
+      expect(authService.login).toHaveBeenCalledWith(loginDto);
     });
 
     it('should handle login with different user roles', () => {
-      const adminUser = {
-        _id: '507f1f77bcf86cd799439012',
-        id: '507f1f77bcf86cd799439012',
-        username: 'admin',
+      const loginDto = {
         email: 'admin@test.com',
-        roles: ['admin', 'user'],
-      } as any;
-      const req = { user: adminUser };
-
+        password: 'adminpass',
+      };
       const expectedToken = { access_token: 'admin_token' };
       (authService.login as jest.Mock).mockReturnValue(expectedToken);
 
-      const result = controller.login(req);
+      const result = controller.login(loginDto);
       
       expect(result).toEqual(expectedToken);
-      expect(authService.login).toHaveBeenCalledWith(adminUser);
+      expect(authService.login).toHaveBeenCalledWith(loginDto);
     });
 
     it('should handle login with minimal user data', () => {
-      const minimalUser = {
-        id: '507f1f77bcf86cd799439013',
+      const loginDto = {
         email: 'minimal@test.com',
-      } as any;
-      const req = { user: minimalUser };
-
+        password: 'minimalpass',
+      };
       const expectedToken = { access_token: 'minimal_token' };
       (authService.login as jest.Mock).mockReturnValue(expectedToken);
 
-      const result = controller.login(req);
+      const result = controller.login(loginDto);
       
       expect(result).toEqual(expectedToken);
-      expect(authService.login).toHaveBeenCalledWith(minimalUser);
+      expect(authService.login).toHaveBeenCalledWith(loginDto);
     });
   });
 

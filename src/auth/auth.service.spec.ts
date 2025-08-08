@@ -2,7 +2,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { JwtService } from '@nestjs/jwt';
 import { AuthService } from './auth.service';
 import { UsersService } from '../users/users.service';
-import { UserDto } from '../users/dto/user.dto';
 import * as bcrypt from 'bcrypt';
 
 // Мокаем bcrypt
@@ -11,8 +10,6 @@ const mockedBcrypt = bcrypt as jest.Mocked<typeof bcrypt>;
 
 describe('AuthService', () => {
   let service: AuthService;
-  let usersService: UsersService;
-  let jwtService: JwtService;
 
   const mockUsersService = {
     findOneByEmail: jest.fn(),
@@ -40,8 +37,6 @@ describe('AuthService', () => {
     }).compile();
 
     service = module.get<AuthService>(AuthService);
-    usersService = module.get<UsersService>(UsersService);
-    jwtService = module.get<JwtService>(JwtService);
   });
 
   afterEach(() => {
@@ -72,7 +67,10 @@ describe('AuthService', () => {
       const result = await service.validateUser(email, password);
 
       expect(mockUsersService.findOneByEmail).toHaveBeenCalledWith(email);
-      expect(mockedBcrypt.compare).toHaveBeenCalledWith(password, hashedPassword);
+      expect(mockedBcrypt.compare).toHaveBeenCalledWith(
+        password,
+        hashedPassword,
+      );
       expect(result).toEqual({
         id: 'user-id',
         username: 'testuser',
@@ -171,21 +169,18 @@ describe('AuthService', () => {
 
   describe('login', () => {
     it('should return access token for valid user', () => {
-      const user: UserDto = {
-        id: 'user-id',
-        username: 'testuser',
+      const loginDto = {
         email: 'test@example.com',
-        roles: ['user'],
+        password: 'password123',
       };
 
       const expectedToken = 'jwt_token_123';
       mockJwtService.sign.mockReturnValue(expectedToken);
 
-      const result = service.login(user);
+      const result = service.login(loginDto);
 
       expect(mockJwtService.sign).toHaveBeenCalledWith({
-        email: user.email,
-        sub: user.id,
+        email: loginDto.email,
       });
       expect(result).toEqual({
         access_token: expectedToken,
@@ -193,21 +188,18 @@ describe('AuthService', () => {
     });
 
     it('should return access token for admin user', () => {
-      const adminUser: UserDto = {
-        id: 'admin-id',
-        username: 'admin',
+      const loginDto = {
         email: 'admin@example.com',
-        roles: ['admin', 'user'],
+        password: 'adminpass',
       };
 
       const expectedToken = 'admin_jwt_token_456';
       mockJwtService.sign.mockReturnValue(expectedToken);
 
-      const result = service.login(adminUser);
+      const result = service.login(loginDto);
 
       expect(mockJwtService.sign).toHaveBeenCalledWith({
-        email: adminUser.email,
-        sub: adminUser.id,
+        email: loginDto.email,
       });
       expect(result).toEqual({
         access_token: expectedToken,
@@ -215,19 +207,18 @@ describe('AuthService', () => {
     });
 
     it('should handle user with minimal data', () => {
-      const minimalUser: UserDto = {
-        id: 'minimal-id',
+      const loginDto = {
         email: 'minimal@example.com',
-      } as UserDto;
+        password: 'minimalpass',
+      };
 
       const expectedToken = 'minimal_jwt_token_789';
       mockJwtService.sign.mockReturnValue(expectedToken);
 
-      const result = service.login(minimalUser);
+      const result = service.login(loginDto);
 
       expect(mockJwtService.sign).toHaveBeenCalledWith({
-        email: minimalUser.email,
-        sub: minimalUser.id,
+        email: loginDto.email,
       });
       expect(result).toEqual({
         access_token: expectedToken,
@@ -268,6 +259,7 @@ describe('AuthService', () => {
       expect(mockUsersService.createUser).toHaveBeenCalledWith(username, email, password);
       expect(mockJwtService.sign).toHaveBeenCalledWith({
         email: email,
+        username: 'newuser',
         sub: 'new-user-id',
       });
       expect(result).toEqual({

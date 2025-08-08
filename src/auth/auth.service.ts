@@ -2,7 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { UsersService } from '../users/users.service';
-import { UserDto } from '../users/dto/user.dto';
+import { UserResponseDto } from '../users/dto/user.dto';
+import { LoginDto } from 'src/auth/dto/login.dto';
 
 @Injectable()
 export class AuthService {
@@ -11,7 +12,10 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async validateUser(email: string, password: string): Promise<UserDto | null> {
+  async validateUser(
+    email: string,
+    password: string,
+  ): Promise<UserResponseDto | null> {
     const user = await this.usersService.findOneByEmail(email);
     // Проверяем, существует ли пользователь и совпадает ли пароль
     if (user && (await bcrypt.compare(password, user.password))) {
@@ -22,8 +26,10 @@ export class AuthService {
     return null;
   }
 
-  login(user: UserDto): { access_token: string } {
-    const payload = { email: user.email, sub: user.id };
+  login(user: LoginDto): { access_token: string } {
+    const payload = {
+      email: user.email,
+    };
     return {
       access_token: this.jwtService.sign(payload),
     };
@@ -33,7 +39,7 @@ export class AuthService {
     username: string,
     email: string,
     password: string,
-  ): Promise<{ access_token: string; user: UserDto }> {
+  ): Promise<{ access_token: string; user: UserResponseDto }> {
     // Проверяем, не существует ли уже пользователь с таким email или username
     const existingUserByEmail = await this.usersService.findOneByEmail(email);
     if (existingUserByEmail) {
@@ -55,7 +61,11 @@ export class AuthService {
 
     // Генерируем JWT токен
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    const payload = { email: newUser.email, sub: newUser.id };
+    const payload = {
+      email: newUser.email,
+      username: newUser.username,
+      sub: newUser.id,
+    };
     const access_token = this.jwtService.sign(payload);
 
     // Возвращаем токен и данные пользователя (без пароля)

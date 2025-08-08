@@ -1,3 +1,14 @@
-import { User } from 'src/users/schemas/user.schema';
+export type UserDto = {
+  id: string;
+  username: string;
+  email: string;
+  password: string;
+  roles: string[];
+};
 
-export type UserDto = Omit<User, 'password'>;
+export type UserResponseDto = {
+  id: string;
+  username: string;
+  email: string;
+  roles: string[];
+};

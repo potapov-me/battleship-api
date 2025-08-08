@@ -52,7 +52,6 @@ export class GameService {
     // 3. Validate ship placement (using validateShipPlacement)
     // 4. Place ships on the board
     // 5. Update game state
-    console.log(`User ${userId} in game ${gameId} is placing ships:`, ships);
     return { success: true };
   }
 
