@@ -11,9 +11,9 @@ export class UsersService {
     {
       id: 1,
       email: 'constantin@potapov.me',
-      password: '$2b$10$2gveH4tPh.tv3oKuRkY76.GXHNA6AO2FOXu5c9baylCSuyBWMyip.', // Хеш пароля (bcrypt)
+      password: '$2b$10$Q6q3a6d70fHZQbviNSF2ZOUlg8aXmXqnNiffvLbqdVnAFZFkHdRRa', // Хеш пароля (bcrypt)
       username: 'potapov',
-      createdAt: new Date('2023-01-01T00:00:00Z'),
+      roles: ['admin'],
     },
   ];
 

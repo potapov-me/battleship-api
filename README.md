@@ -2,6 +2,10 @@
 
 ---
 
+план на следующие шаги
+- подключить монгу
+- сделать регистрацию пользователей
+
 #### **1. Обзор Системы**
 - **Тип приложения**: Многопользовательский REST/WebSocket сервер.
 - **Цель**: Реализация игры "Морской бой" с возможностью онлайн-боёв, расстановки кораблей, пошаговой стрельбы и определения победителя.
@@ -111,12 +115,20 @@
 ---
 
 #### **5. Контроллеры (REST API)**
-- **`RoomController`**  
+- **`AuthController`**
+  - `POST /auth/login` → Аутентификация пользователя.
+    - **Body**: `{ "email": "user@example.com", "password": "password" }`
+    - **Returns**: `{ "access_token": "jwt_token" }`
+  - `POST /auth/profile` → Получение профиля пользователя (требуется JWT).
+    - **Headers**: `{ "Authorization": "Bearer jwt_token" }`
+    - **Returns**: `{ "id": 1, "email": "user@example.com", "username": "user" }`
+
+- **`RoomController`**
   - `POST /rooms` → Создать комнату.
   - `POST /rooms/:id/join` → Присоединиться.
   - `GET /rooms` → Список активных комнат.
 
-- **`GameController`**  
+- **`GameController`**
   - `POST /games/:id/ships` → Расставить корабли.
   - `POST /games/:id/shot` → Сделать выстрел.
 
