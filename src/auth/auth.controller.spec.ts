@@ -51,9 +51,10 @@ describe('AuthController', () => {
         access_token: 'test_token',
       });
 
+      const loginSpy = jest.spyOn(authService, 'login');
       const result = controller.login(loginDto, { user });
       expect(result).toEqual({ access_token: 'test_token' });
-      expect(authService.login).toHaveBeenCalledWith(user);
+      expect(loginSpy).toHaveBeenCalledWith(user);
     });
   });
 
@@ -65,11 +66,13 @@ describe('AuthController', () => {
         hash,
       );
 
+      const generatePasswordHashSpy = jest.spyOn(
+        usersService,
+        'generate_password_hash',
+      );
       const result = await controller.getPasswordHash(password, {});
       expect(result).toBe(hash);
-      expect(usersService.generate_password_hash).toHaveBeenCalledWith(
-        password,
-      );
+      expect(generatePasswordHashSpy).toHaveBeenCalledWith(password);
     });
   });
 

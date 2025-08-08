@@ -74,7 +74,10 @@ export class ShipValidatorService {
     );
 
     for (const type in this.SHIP_RULES) {
-      if (this.SHIP_RULES[type].count !== (counts[type] || 0)) {
+      if (
+        this.SHIP_RULES[type as ShipType].count !==
+        (counts[type as ShipType] || 0)
+      ) {
         return false;
       }
     }

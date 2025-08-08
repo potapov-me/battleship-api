@@ -55,10 +55,12 @@ describe('AuthService', () => {
       (usersService.findOneByEmail as jest.Mock).mockResolvedValue(user);
       (bcrypt.compare as jest.Mock).mockResolvedValue(true);
 
+      const compareSpy = jest.spyOn(bcrypt, 'compare');
       const result = await service.validateUser('test@test.com', 'password');
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { password, ...expectedResult } = user;
       expect(result).toEqual(expectedResult);
+      expect(compareSpy).toHaveBeenCalledWith('password', user.password);
     });
 
     it('should return null if user not found', async () => {
@@ -90,14 +92,12 @@ describe('AuthService', () => {
         id: 1,
         roles: ['user'],
       };
+      const signSpy = jest.spyOn(service['jwtService'], 'sign');
       const result = service.login(user);
       expect(result).toEqual({
         access_token: 'test_token',
       });
-      expect(service['jwtService'].sign).toHaveBeenCalledWith({
-        email: user.email,
-        sub: user.id,
-      });
+      expect(signSpy).toHaveBeenCalledWith({ email: user.email, sub: user.id });
     });
   });
 });
