@@ -1,5 +1,5 @@
-import { User } from 'src/users/models/user.models';
 import { Board } from './board.model';
+import { User } from 'src/users/schemas/user.schema';
 
 export enum GameStatus {
   WAITING = 'waiting',

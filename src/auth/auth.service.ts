@@ -28,4 +28,41 @@ export class AuthService {
       access_token: this.jwtService.sign(payload),
     };
   }
+
+  async register(
+    username: string,
+    email: string,
+    password: string,
+  ): Promise<{ access_token: string; user: UserDto }> {
+    // Проверяем, не существует ли уже пользователь с таким email или username
+    const existingUserByEmail = await this.usersService.findOneByEmail(email);
+    if (existingUserByEmail) {
+      throw new Error('Пользователь с таким email уже существует');
+    }
+
+    const existingUserByUsername =
+      await this.usersService.findOneByUsername(username);
+    if (existingUserByUsername) {
+      throw new Error('Пользователь с таким username уже существует');
+    }
+
+    // Создаем нового пользователя
+    const newUser = await this.usersService.createUser(
+      username,
+      email,
+      password,
+    );
+
+    // Генерируем JWT токен
+    const payload = { email: newUser.email, sub: newUser.id };
+    const access_token = this.jwtService.sign(payload);
+
+    // Возвращаем токен и данные пользователя (без пароля)
+    const { password: _, ...userWithoutPassword } = newUser.toObject();
+
+    return {
+      access_token,
+      user: userWithoutPassword,
+    };
+  }
 }

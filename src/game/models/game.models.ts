@@ -1,5 +1,5 @@
-import { User } from 'src/users/models/user.models';
 import { Room } from './room.models';
+import { User } from 'src/users/schemas/user.schema';
 
 export enum GameStatus {
   Placing = 'placing', // Игроки расставляют корабли

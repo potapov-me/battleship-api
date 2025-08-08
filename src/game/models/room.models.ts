@@ -1,4 +1,4 @@
-import { User } from 'src/users/models/user.models';
+import { User } from 'src/users/schemas/user.schema';
 
 export enum RoomStatus {
   Waiting = 'waiting',

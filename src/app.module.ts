@@ -1,34 +1,31 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-// import { PlayersModule } from './players/players.module';
-// import { GameModule } from './game/game.module';
 import { AuthModule } from './auth/auth.module';
-// import { UsersModule } from './users/users.module';
-import { ConfigModule } from '@nestjs/config';
-// import { TypeOrmModule } from '@nestjs/typeorm';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { MongooseModule } from '@nestjs/mongoose';
+import type { Connection } from 'mongoose';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
-    // TypeOrmModule.forRootAsync({
-    //   imports: [ConfigModule],
-    //   inject: [ConfigService],
-    //   useFactory: (configService: ConfigService) => ({
-    //     type: 'postgres',
-    //     host: configService.get<string>('DB_HOST'),
-    //     port: configService.get<number>('DB_PORT'),
-    //     username: configService.get<string>('DB_USER'),
-    //     password: configService.get<string>('DB_PASSWORD'),
-    //     database: configService.get<string>('DB_NAME'),
-    //     entities: [], // убедитесь, что User импортирован
-    //     synchronize: configService.get<boolean>('DB_SYNCHRONIZE'),
-    //   }),
-    // }),
-    // PlayersModule,
-    // GameModule,
+    MongooseModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: (configService: ConfigService) => ({
+        uri: configService.get<string>('MONGO_URI'),
+        connectionFactory: (connection: Connection) => {
+          connection.on('connected', () => {
+            console.log('MongoDB connected successfully!');
+          });
+          connection.on('error', (err) => {
+            console.error('MongoDB connection error:', err);
+          });
+          return connection;
+        },
+      }),
+      inject: [ConfigService],
+    }),
     AuthModule,
-    // UsersModule,
   ],
   controllers: [AppController],
   providers: [AppService],

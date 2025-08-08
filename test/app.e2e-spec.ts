@@ -1,7 +1,6 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
-import * as request from 'supertest';
+import request from 'supertest';
 import { AppModule } from './../src/app.module';
 
 describe('AppController (e2e)', () => {
@@ -16,11 +15,14 @@ describe('AppController (e2e)', () => {
     await app.init();
   });
 
+  afterEach(async () => {
+    await app.close();
+  });
+
   it('/ (GET)', async () => {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     await request(app.getHttpServer())
       .get('/')
       .expect(200)
-      .expect('Hello World!');
+      .expect('Hello in battleship-api service!');
   });
 });

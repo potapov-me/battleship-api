@@ -1,21 +1,21 @@
 
 services:
-  battleship-api:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    ports:
-      - '3000:3000'
-    depends_on:
-      - mongo
-      - postgres
-      - redis
-    environment:
-      - DATABASE_URL=mongodb://mongo:27017/battleship
-      - POSTGRES_HOST=postgres
-      - POSTGRES_PORT=5432
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
+#  battleship-api:
+#    build:
+#      context: .
+#      dockerfile: Dockerfile
+#    ports:
+#      - '3000:3000'
+#    depends_on:
+#      - mongo
+#      - postgres
+#      - redis
+#    environment:
+#      - DATABASE_URL=mongodb://mongo:27017/battleship
+#      - POSTGRES_HOST=postgres
+#      - POSTGRES_PORT=5432
+#      - REDIS_HOST=redis
+#      - REDIS_PORT=6379
 
   mongo:
     image: mongo

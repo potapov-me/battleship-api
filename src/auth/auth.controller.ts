@@ -10,8 +10,8 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { UsersService } from '../users/users.service';
-import { LoginDto } from './dto/login.dto';
-import { User } from 'src/users/models/user.models';
+import { RegisterDto } from './dto/register.dto';
+import { User } from 'src/users/schemas/user.schema';
 
 @Controller('auth')
 export class AuthController {
@@ -22,11 +22,25 @@ export class AuthController {
 
   @UseGuards(AuthGuard('local'))
   @Post('login')
-  login(
-    @Body() loginDto: LoginDto,
-    @Request() req: { user: Omit<User, 'password'> },
-  ) {
+  login(@Request() req: { user: Omit<User, 'password'> }) {
     return this.authService.login(req.user);
+  }
+
+  @Post('register')
+  async register(@Body() registerDto: RegisterDto) {
+    try {
+      const result = await this.authService.register(
+        registerDto.username,
+        registerDto.email,
+        registerDto.password,
+      );
+      return result;
+    } catch (error) {
+      return {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
+        error: error.message,
+      };
+    }
   }
 
   @Get('password/:password')
@@ -42,10 +56,10 @@ export class AuthController {
       return { error: 'Email is missing from user object' };
     }
     const user = await this.usersService.findOneByEmail(req.user.email);
+
     if (user) {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { password, ...result } = user;
-      return result;
+      const { username, email, roles } = user;
+      return { username, email, roles };
     }
   }
 }
