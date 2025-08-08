@@ -23,6 +23,7 @@ describe('AuthController', () => {
           provide: UsersService,
           useValue: {
             generate_password_hash: jest.fn(),
+            findOneByEmail: jest.fn(),
           },
         },
       ],
@@ -43,14 +44,14 @@ describe('AuthController', () => {
   });
 
   describe('login', () => {
-    it('should return an access token', async () => {
+    it('should return an access token', () => {
       const user = { id: 1, username: 'test' };
       const loginDto = { email: 'test@test.com', password: 'password' };
       (authService.login as jest.Mock).mockReturnValue({
         access_token: 'test_token',
       });
 
-      const result = await controller.login(loginDto, { user });
+      const result = controller.login(loginDto, { user });
       expect(result).toEqual({ access_token: 'test_token' });
       expect(authService.login).toHaveBeenCalledWith(user);
     });
@@ -73,10 +74,18 @@ describe('AuthController', () => {
   });
 
   describe('getProfile', () => {
-    it('should return the user profile', () => {
-      const user = { id: 1, username: 'test' };
-      const result = controller.getProfile({ user });
-      expect(result).toBe(user);
+    it('should return the user profile', async () => {
+      const user = { id: 1, username: 'test', email: 'test@test.com' };
+      (usersService.findOneByEmail as jest.Mock).mockResolvedValue(user);
+      const result = await controller.getProfile({ user });
+      expect(result).toEqual(user);
+    });
+
+    it('should return an error if the user is not found', async () => {
+      const user = { id: 1, username: 'test', email: 'test@test.com' };
+      (usersService.findOneByEmail as jest.Mock).mockResolvedValue(null);
+      const result = await controller.getProfile({ user });
+      expect(result).toEqual(undefined);
     });
   });
 });

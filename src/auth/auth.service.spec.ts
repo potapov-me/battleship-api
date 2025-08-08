@@ -94,6 +94,10 @@ describe('AuthService', () => {
       expect(result).toEqual({
         access_token: 'test_token',
       });
+      expect(service['jwtService'].sign).toHaveBeenCalledWith({
+        email: user.email,
+        sub: user.id,
+      });
     });
   });
 });

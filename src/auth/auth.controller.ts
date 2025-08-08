@@ -22,11 +22,11 @@ export class AuthController {
 
   @UseGuards(AuthGuard('local'))
   @Post('login')
-  async login(
+  login(
     @Body() loginDto: LoginDto,
     @Request() req: { user: Omit<User, 'password'> },
   ) {
-    return await this.authService.login(req.user);
+    return this.authService.login(req.user);
   }
 
   @Get('password/:password')
