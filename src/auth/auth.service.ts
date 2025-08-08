@@ -54,14 +54,17 @@ export class AuthService {
     );
 
     // Генерируем JWT токен
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const payload = { email: newUser.email, sub: newUser.id };
     const access_token = this.jwtService.sign(payload);
 
     // Возвращаем токен и данные пользователя (без пароля)
-    const { password: _, ...userWithoutPassword } = newUser.toObject();
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-unsafe-assignment
+    const { password: _unused, ...userWithoutPassword } = newUser.toObject();
 
     return {
       access_token,
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       user: userWithoutPassword,
     };
   }
