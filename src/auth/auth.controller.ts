@@ -22,7 +22,7 @@ export class AuthController {
   @UseGuards(AuthGuard('local'))
   @Post('login')
   async login(@Body() loginDto: LoginDto, @Request() req: { user: any }) {
-    return this.authService.login(req.user);
+    return await this.authService.login(req.user);
   }
 
   @Get('password/:password')
@@ -34,6 +34,11 @@ export class AuthController {
   @UseGuards(AuthGuard('jwt'))
   @Post('profile')
   getProfile(@Request() req) {
-    return req.user;
+    const user = this.usersService.findOneByEmail(req.user.email);
+    if (user) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { password, ...result } = user;
+      return result;
+    }
   }
 }
