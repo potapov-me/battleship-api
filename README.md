@@ -1,221 +1,115 @@
-### ТЗ Архитектуры Игры "Морской Бой" на NestJS
+## Battleship API (NestJS)
 
----
+Небольшой REST API для игры «Морской бой» на NestJS. В текущей версии реализована аутентификация и регистрация пользователей в MongoDB (Mongoose) с JWT. Модули игры и комнат подготовлены в виде заглушек.
 
-план на следующие шаги
-- прибраться в коде
+### Технологии
+- **Runtime**: Node.js 22
+- **Framework**: NestJS 11 (TypeScript)
+- **База данных**: MongoDB (Mongoose)
+- **Аутентификация**: Passport (local, JWT)
 
-#### **1. Обзор Системы**
-- **Тип приложения**: Многопользовательский REST/WebSocket сервер.
-- **Цель**: Реализация игры "Морской бой" с возможностью онлайн-боёв, расстановки кораблей, пошаговой стрельбы и определения победителя.
-- **Стек**: NestJS, TypeScript, WebSocket (Socket.IO), PostgreSQL/TypeORM, Redis (для сессий/кеша).
-
----
-
-#### **2. Модули Приложения**
-1. **`AuthModule`**  
-   - Регистрация/аутентификация (JWT).
-   - DTO: `LoginDto`, `RegisterDto`.
-   - Сервис: `AuthService`.
-   - Контроллер: `AuthController`.
-
-2. **`UserModule`**  
-   - Управление профилями пользователей.
-   - Сущность: `User` (id, email, username, password).
-   - Сервис: `UserService`.
-   - Контроллер: `UserController`.
-
-3. **`GameModule`** (Ядро)  
-   - Логика игры: создание комнат, расстановка кораблей, ходы.
-   - Подмодули: `Room`, `Match`, `Ship`, `Board`.
-
-4. **`WebSocketModule`**  
-   - Реальная коммуникация между игроками.
-   - Шлюзы: `GameGateway` (обработка событий WebSocket).
-
-5. **`SharedModule`**  
-   - Утилиты, DTO, конфиги, интерсепторы.
-
----
-
-#### **3. Сущности (TypeORM)**
-1. **`User`**  
-   ```typescript
-   @Entity()
-   class User {
-     @PrimaryGeneratedColumn()
-     id: number;
-     
-     @Column({ unique: true })
-     email: string;
-   }
-   ```
-
-2. **`Room`** (Игровая комната)  
-   ```typescript
-   @Entity()
-   class Room {
-     @PrimaryGeneratedColumn('uuid')
-     id: string;
-     
-     @Column()
-     status: 'waiting' | 'active' | 'finished';
-     
-     @ManyToOne(() => User)
-     player1: User;
-     
-     @ManyToOne(() => User, { nullable: true })
-     player2: User | null;
-   }
-   ```
-
-3. **`Game`** (Экземпляр матча)  
-   ```typescript
-   @Entity()
-   class Game {
-     @PrimaryGeneratedColumn('uuid')
-     id: string;
-     
-     @OneToOne(() => Room)
-     room: Room;
-     
-     @Column('jsonb') // Пример: { player1: BoardState, player2: BoardState }
-     state: Record<string, BoardState>;
-   }
-   ```
-
-4. **`BoardState`** (Вложенный объект)  
-   ```typescript
-   type BoardState = {
-     ships: ShipPosition[]; // [{ type: 'destroyer', positions: [[x1,y1], [x1,y2]] }]
-     shots: Array<{ x: number; y: number; hit: boolean }>;
-   };
-   ```
-
----
-
-#### **4. Сервисы**
-1. **`RoomService`**  
-   - `createRoom(userId)`: Создание комнаты.
-   - `joinRoom(roomId, userId)`: Присоединение к комнате.
-   - `startGame(roomId)`: Начало игры (проверка готовности).
-
-2. **`GameService`**  
-   - `placeShips(gameId, userId, ships: ShipPosition[])`: Расстановка кораблей.
-   - `makeShot(gameId, userId, x: number, y: number)`: Обработка выстрела.
-   - `checkWinCondition(gameId)`: Проверка победы.
-
-3. **`ShipValidatorService`**  
-   - Валидация кораблей:
-     - Размеры (4-палубный, 3-палубный ×2, ...).
-     - Наложение кораблей/выход за границы.
-     - Расстояние между кораблями ≥1 клетки.
-
----
-
-#### **5. Контроллеры (REST API)**
-- **`AuthController`**
-  - `POST /auth/login` → Аутентификация пользователя.
-    - **Body**: `{ "email": "user@example.com", "password": "password" }`
-    - **Returns**: `{ "access_token": "jwt_token" }`
-  - `POST /auth/profile` → Получение профиля пользователя (требуется JWT).
-    - **Headers**: `{ "Authorization": "Bearer jwt_token" }`
-    - **Returns**: `{ "id": 1, "email": "user@example.com", "username": "user" }`
-
-- **`RoomController`**
-  - `POST /rooms` → Создать комнату.
-  - `POST /rooms/:id/join` → Присоединиться.
-  - `GET /rooms` → Список активных комнат.
-
-- **`GameController`**
-  - `POST /games/:id/ships` → Расставить корабли.
-  - `POST /games/:id/shot` → Сделать выстрел.
-
----
-
-#### **6. WebSocket Events (Socket.IO)**
-- **События**:
-  - `room_created` (новая комната).
-  - `player_joined` (игрок присоединился).
-  - `ships_placed` (корабли расставлены).
-  - `shot_fired` (выстрел, результат: hit/miss/sunk).
-  - `game_over` (победитель определён).
-
-- **Пример обработки**:
-  ```typescript
-  @WebSocketGateway()
-  class GameGateway {
-    @SubscribeMessage('shot')
-    handleShot(client: Socket, data: { gameId: string; x: number; y: number }) {
-      const result = this.gameService.makeShot(data);
-      this.server.emit(`game_update:${data.gameId}`, result);
-    }
-  }
-  ```
-
----
-
-#### **7. Валидация и Безопасность**
-- **Guard-ы**: 
-  - `JwtAuthGuard`: Защита эндпоинтов.
-  - `RoomOwnerGuard`: Только создатель комнаты может её стартовать.
-- **Pipe**: 
-  - `ValidationPipe` для DTO.
-  - Кастомная валидация кораблей через `ShipValidator`.
-
----
-
-#### **8. Алгоритм Игры**
-1. **Инициализация**:
-   - Игрок создаёт комнату → `Room` в БД.
-   - Второй игрок присоединяется → `room.status = 'active'`.
-
-2. **Расстановка кораблей**:
-   - Оба игрока отправляют координаты кораблей.
-   - Сервис `ShipValidator` проверяет корректность.
-
-3. **Бой**:
-   - Игроки ходят по очереди (хранится в `Game.currentTurn`).
-   - При выстреле:
-     - Проверка ячейки: попадание/промах.
-     - Обновление состояния доски.
-     - Проверка условия победы (все корабли противника потоплены).
-
----
-
-#### **9. Тестирование**
-- **Юнит-тесты**: Сервисы (`GameService`, `ShipValidator`).
-- **Интеграционные тесты**: Контроллеры + WebSocket.
-- **e2e**: Симуляция полного игрового цикла.
-
----
-
-#### **10. Развёртывание**
-- **Инфраструктура**: Docker-контейнеры (NestJS + PostgreSQL + Redis).
-- **CI/CD**: GitHub Actions → автоматические тесты и деплой на сервер.
-
----
-
-#### **Диаграмма Компонентов**
-```mermaid
-graph TD
-  A[Client] -->|HTTP| B[AuthController]
-  A -->|WebSocket| C[GameGateway]
-  C --> D[GameService]
-  D --> E[ShipValidator]
-  D --> F[RoomService]
-  F --> G[(Database)]
+## Быстрый старт
+1) Установите зависимости:
+```bash
+npm install
 ```
 
----
+2) Скопируйте `.env`:
+```bash
+cp example.env .env
+```
+Отредактируйте переменные по необходимости (ниже см. «Переменные окружения»). По умолчанию приложение слушает порт `3000`, если `PORT` не задан.
 
-#### **Типовые Сценарии**
-1. **Создание комнаты**:  
-   `POST /rooms` → `201 Created` + `{ roomId: uuid }`.
+3) Поднимите MongoDB (любой способ):
+- Docker Compose (из репозитория):
+```bash
+docker compose up -d mongo express
+```
+- Локально установленный MongoDB: убедитесь, что доступен `mongodb://localhost:27017`.
 
-2. **Выстрел**:  
-   `socket.emit('shot', { gameId, x: 5, y: 3 })` → Шлюз проверяет очередь, обновляет игру, отправляет результат.
+4) Запуск в dev-режиме:
+```bash
+npm run start:dev
+```
+Приложение будет доступно на `http://localhost:3000` (или на значении `PORT` из `.env`).
 
----
+## Переменные окружения
+Поддерживаются следующие переменные (`example.env` содержит базовые значения):
+- `JWT_SECRET` — секрет для подписи JWT (обязательно)
+- `PORT` — порт HTTP-сервера (по умолчанию 3000)
+- `MONGO_URI` — строка подключения к MongoDB (например, `mongodb://localhost:27017/sea-battle`)
+- `SALT_ROUNDS` — количество раундов соли для bcrypt (необязательно, по умолчанию 10)
 
-**Итог**: Архитектура обеспечит масштабируемость, чёткое разделение ответственности и поддержку реального времени через WebSocket. Для сложной логики (например, ИИ для одиночной игры) можно добавить модуль `AIService`.
+## Скрипты npm
+- `start` — запуск prod-сборки
+- `start:dev` — запуск с вотчером
+- `build` — сборка TypeScript
+- `test` — юнит-тесты
+- `test:e2e` — e2e-тесты
+- `test:all` — юнит + e2e
+- `lint` — ESLint с авто-чином
+- `format` — Prettier форматирование
+- `check:main-db` — проверка подключения к основной БД (`scripts/check-main-db.js`)
+
+## API
+### Аутентификация (`/auth`)
+- `POST /auth/register` — регистрация нового пользователя
+  - Тело: `{ username: string, email: string, password: string }`
+  - Успех: `{ access_token: string, user: { id, username, email, roles } }`
+  - Ошибки: `{ error: string }`
+  - Примечание: в текущей реализации ошибки регистрации возвращаются со статусом 201 и полем `error` в теле ответа (см. `REGISTRATION_API.md`).
+
+- `POST /auth/login` — логин по email/паролю
+  - Тело: `{ email: string, password: string }`
+  - Успех: `{ access_token: string }`
+  - Ошибка: `401 Unauthorized`
+
+- `POST /auth/profile` — профиль пользователя (требуется JWT `Authorization: Bearer <token>`)
+  - Успех: `{ username, email, roles }`
+  - Ошибка: `401 Unauthorized`
+
+- `GET /auth/password/:password` — утилитарный эндпоинт для получения хеша пароля (dev)
+  - Успех: строка-хеш (или объект в зависимости от реализации сериализации)
+
+Подробная спецификация регистрации: см. `REGISTRATION_API.md` и краткое резюме — `REGISTRATION_SUMMARY.md`.
+
+### Комнаты (`/rooms`) — заглушки
+- `POST /rooms` — создать комнату
+- `POST /rooms/:id/join` — присоединиться к комнате
+- `GET /rooms` — список активных комнат (пока возвращает пустой массив)
+
+### Игра
+Интерфейсы и сервисы подготовлены, но прикладная логика и WebSocket-шлюзы пока не реализованы.
+
+## Тестирование
+```bash
+npm run test       # юнит-тесты
+npm run test:e2e   # e2e-тесты
+```
+Тесты используют отдельную тестовую БД MongoDB на localhost:27017. Убедитесь, что MongoDB доступен локально перед запуском e2e.
+
+## Docker
+### Сборка прод-образа
+```bash
+docker build -t battleship-api .
+```
+Запуск:
+```bash
+docker run --rm -p 3000:3000 \
+  -e PORT=3000 \
+  -e JWT_SECRET=GLADIUS \
+  -e MONGO_URI="mongodb://host.docker.internal:27017/sea-battle" \
+  battleship-api
+```
+
+### Docker Compose (зависимости)
+В `docker-compose.yml` описаны сервисы `mongo`, `mongo-express`, `postgres`, `redis`. Для текущей версии приложения достаточно поднять `mongo` (и опционально `mongo-express`). Блок сервиса приложения закомментирован.
+
+## План и дальнейшая работа
+Краткий план задач хранится в `plan.md`. Ближайшие шаги:
+- Убрать заглушки в `RoomService` и реализовать хранение комнат
+- Добавить игровую механику и валидацию кораблей
+- Подключить WebSocket-шлюз для реального времени
+
+## Лицензия
+Проект распространяется без лицензии (`UNLICENSED`).
