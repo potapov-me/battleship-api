@@ -11,10 +11,10 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async validateUser(email: string, pass: string): Promise<UserDto | null> {
+  async validateUser(email: string, password: string): Promise<UserDto | null> {
     const user = await this.usersService.findOneByEmail(email);
     // Проверяем, существует ли пользователь и совпадает ли пароль
-    if (user && (await bcrypt.compare(pass, user.password))) {
+    if (user && (await bcrypt.compare(password, user.password))) {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { password, ...result } = user;
       return result;

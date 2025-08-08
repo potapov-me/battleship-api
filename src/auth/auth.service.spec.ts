@@ -3,6 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { UsersService } from '../users/users.service';
 import { AuthService } from './auth.service';
 import * as bcrypt from 'bcrypt';
+import { UserDto } from 'src/users/dto/user.dto';
 
 jest.mock('bcrypt', () => ({
   compare: jest.fn(),
@@ -49,7 +50,7 @@ describe('AuthService', () => {
         id: 1,
         email: 'test@test.com',
         password: 'hashedPassword',
-        username: 'testuser',
+        username: 'test',
         createdAt: new Date(),
       };
       (usersService.findOneByEmail as jest.Mock).mockResolvedValue(user);
@@ -74,7 +75,7 @@ describe('AuthService', () => {
         id: 1,
         email: 'test@test.com',
         password: 'hashedPassword',
-        username: 'testuser',
+        username: 'test',
         createdAt: new Date(),
       };
       (usersService.findOneByEmail as jest.Mock).mockResolvedValue(user);
@@ -87,7 +88,8 @@ describe('AuthService', () => {
 
   describe('login', () => {
     it('should return an access token', () => {
-      const user = {
+      const user: UserDto = {
+        username: 'test',
         email: 'test@test.com',
         id: 1,
         roles: ['user'],
