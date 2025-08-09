@@ -6,6 +6,7 @@
 - **Runtime**: Node.js 22
 - **Framework**: NestJS 11 (TypeScript)
 - **База данных**: MongoDB (Mongoose)
+- **Кэш/Хранилище**: Redis (ioredis)
 - **Аутентификация**: Passport (local, JWT)
 
 ## Быстрый старт
@@ -20,12 +21,14 @@ cp example.env .env
 ```
 Отредактируйте переменные по необходимости (ниже см. «Переменные окружения»). По умолчанию приложение слушает порт `3000`, если `PORT` не задан.
 
-3) Поднимите MongoDB (любой способ):
+3) Поднимите зависимости (любой способ):
 - Docker Compose (из репозитория):
 ```bash
-docker compose up -d mongo express
+docker compose up -d mongo express redis
 ```
-- Локально установленный MongoDB: убедитесь, что доступен `mongodb://localhost:27017`.
+- Локально установленные сервисы: убедитесь, что доступны:
+  - MongoDB: `mongodb://localhost:27017`
+  - Redis: `localhost:6379`
 
 4) Запуск в dev-режиме:
 ```bash
@@ -38,6 +41,10 @@ npm run start:dev
 - `JWT_SECRET` — секрет для подписи JWT (обязательно)
 - `PORT` — порт HTTP-сервера (по умолчанию 3000)
 - `MONGO_URI` — строка подключения к MongoDB (например, `mongodb://localhost:27017/sea-battle`)
+- `REDIS_HOST` — хост Redis (по умолчанию localhost)
+- `REDIS_PORT` — порт Redis (по умолчанию 6379)
+- `REDIS_PASSWORD` — пароль Redis (необязательно)
+- `REDIS_DB` — номер базы данных Redis (по умолчанию 0)
 - `SALT_ROUNDS` — количество раундов соли для bcrypt (необязательно, по умолчанию 10)
 
 ## Скрипты npm
@@ -50,6 +57,7 @@ npm run start:dev
 - `lint` — ESLint с авто-чином
 - `format` — Prettier форматирование
 - `check:main-db` — проверка подключения к основной БД (`scripts/check-main-db.js`)
+- `test:redis` — проверка подключения к Redis (`scripts/test-redis.js`)
 
 ## API
 ### Аутентификация (`/auth`)
@@ -73,10 +81,10 @@ npm run start:dev
 
 Подробная спецификация регистрации: см. `REGISTRATION_API.md` и краткое резюме — `REGISTRATION_SUMMARY.md`.
 
-### Комнаты (`/rooms`) — заглушки
+### Комнаты (`/rooms`)
 - `POST /rooms` — создать комнату
 - `POST /rooms/:id/join` — присоединиться к комнате
-- `GET /rooms` — список активных комнат (пока возвращает пустой массив)
+- `GET /rooms` — список активных комнат (комнаты в статусе "waiting")
 
 ### Игра
 Интерфейсы и сервисы подготовлены, но прикладная логика и WebSocket-шлюзы пока не реализованы.
@@ -107,7 +115,7 @@ docker run --rm -p 3000:3000 \
 
 ## План и дальнейшая работа
 Краткий план задач хранится в `plan.md`. Ближайшие шаги:
-- Убрать заглушки в `RoomService` и реализовать хранение комнат
+- ✅ Реализовано хранение комнат в Redis
 - Добавить игровую механику и валидацию кораблей
 - Подключить WebSocket-шлюз для реального времени
 
