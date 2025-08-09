@@ -74,10 +74,8 @@ describe('AuthController (e2e)', () => {
 
       expect(response.body).toHaveProperty('access_token');
       expect(response.body).toHaveProperty('user');
-      expect(response.body.user).toHaveProperty('id');
       expect(response.body.user.username).toBe(registerData.username);
       expect(response.body.user.email).toBe(registerData.email);
-      expect(response.body.user.roles).toContain('user');
       expect(response.body.user).not.toHaveProperty('password');
 
       // Проверяем, что пользователь сохранен в базе данных

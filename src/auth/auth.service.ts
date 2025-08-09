@@ -91,7 +91,13 @@ export class AuthService {
 
     // Возвращаем токен и данные пользователя (без пароля)
     // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-unsafe-assignment
-    const { password: _unused, id, isEmailConfirmed, roles, ...userWithoutPassword } = newUser.toObject();
+    const {
+      password: _unused,
+      id,
+      isEmailConfirmed,
+      roles,
+      ...userWithoutPassword
+    } = newUser.toObject();
 
     return {
       access_token,

@@ -13,7 +13,11 @@ export class MailService {
   private lastMail: SentMail | null = null;
 
   async sendMail(mail: SentMail): Promise<void> {
-    console.log(mail);
+    const isTestEnv = process.env.NODE_ENV === 'test';
+    if (!isTestEnv) {
+      console.log(mail);
+    }
+
     this.lastMail = mail;
   }
 
@@ -25,5 +29,3 @@ export class MailService {
     this.lastMail = null;
   }
 }
-
-

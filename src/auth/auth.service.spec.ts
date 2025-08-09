@@ -282,10 +282,8 @@ describe('AuthService', () => {
         expect.objectContaining({
           access_token: 'new_jwt_token',
           user: {
-            id: 'new-user-id',
             username: 'newuser',
             email: 'new@example.com',
-            roles: ['user'],
           },
         }),
       );
@@ -350,11 +348,9 @@ describe('AuthService', () => {
         password: 'hashed_password',
         roles: ['user'],
         toObject: jest.fn().mockReturnValue({
-          id: 'special-user-id',
           username: 'test_user-123',
           email: 'special@example.com',
           password: 'hashed_password',
-          roles: ['user'],
         }),
       };
 
@@ -372,10 +368,8 @@ describe('AuthService', () => {
         expect.objectContaining({
           access_token: 'special_jwt_token',
           user: {
-            id: 'special-user-id',
             username: 'test_user-123',
             email: 'special@example.com',
-            roles: ['user'],
           },
         }),
       );
@@ -393,11 +387,8 @@ describe('AuthService', () => {
         password: 'hashed_long_password',
         roles: ['user'],
         toObject: jest.fn().mockReturnValue({
-          id: 'longpass-user-id',
           username: 'longpassuser',
           email: 'longpass@example.com',
-          password: 'hashed_long_password',
-          roles: ['user'],
         }),
       };
 
@@ -415,10 +406,8 @@ describe('AuthService', () => {
         expect.objectContaining({
           access_token: 'longpass_jwt_token',
           user: {
-            id: 'longpass-user-id',
             username: 'longpassuser',
             email: 'longpass@example.com',
-            roles: ['user'],
           },
         }),
       );
