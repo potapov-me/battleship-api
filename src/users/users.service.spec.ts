@@ -179,6 +179,7 @@ describe('UsersService', () => {
         email,
         password: expect.any(String),
         roles: ['user'],
+        isEmailConfirmed: false,
       });
       expect(mockSave).toHaveBeenCalled();
       expect(result).toEqual(mockUser);
@@ -214,6 +215,7 @@ describe('UsersService', () => {
         email,
         password: hashedPassword,
         roles: ['user'],
+        isEmailConfirmed: false,
       });
     });
   });

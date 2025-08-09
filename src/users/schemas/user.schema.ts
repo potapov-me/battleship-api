@@ -46,6 +46,12 @@ export class User {
 
   @Prop([String])
   roles: string[];
+
+  @Prop({ default: false })
+  isEmailConfirmed: boolean;
+
+  @Prop()
+  emailConfirmationToken?: string;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

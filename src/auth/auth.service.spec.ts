@@ -3,6 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import { AuthService } from './auth.service';
 import { UsersService } from '../users/users.service';
 import * as bcrypt from 'bcrypt';
+import { MailService } from '../shared/mail.service';
 
 // Мокаем bcrypt
 jest.mock('bcrypt');
@@ -15,11 +16,16 @@ describe('AuthService', () => {
     findOneByEmail: jest.fn(),
     findOneByUsername: jest.fn(),
     createUser: jest.fn(),
+    setEmailConfirmationToken: jest.fn(),
   };
 
   const mockJwtService = {
     sign: jest.fn(),
   };
+
+  const mockMailService = {
+    sendMail: jest.fn().mockResolvedValue(undefined),
+  } as Partial<MailService> as MailService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -32,6 +38,10 @@ describe('AuthService', () => {
         {
           provide: JwtService,
           useValue: mockJwtService,
+        },
+        {
+          provide: MailService,
+          useValue: mockMailService,
         },
       ],
     }).compile();
@@ -59,6 +69,7 @@ describe('AuthService', () => {
         email: 'test@example.com',
         password: hashedPassword,
         roles: ['user'],
+        isEmailConfirmed: true,
       };
 
       mockUsersService.findOneByEmail.mockResolvedValue(mockUser);
@@ -71,12 +82,14 @@ describe('AuthService', () => {
         password,
         hashedPassword,
       );
-      expect(result).toEqual({
-        id: 'user-id',
-        username: 'testuser',
-        email: 'test@example.com',
-        roles: ['user'],
-      });
+      expect(result).toEqual(
+        expect.objectContaining({
+          id: 'user-id',
+          username: 'testuser',
+          email: 'test@example.com',
+          roles: ['user'],
+        }),
+      );
     });
 
     it('should return null when user does not exist', async () => {
@@ -149,6 +162,7 @@ describe('AuthService', () => {
         email: 'admin@example.com',
         password: hashedPassword,
         roles: ['admin', 'user'],
+        isEmailConfirmed: true,
       };
 
       mockUsersService.findOneByEmail.mockResolvedValue(mockAdminUser);
@@ -158,12 +172,14 @@ describe('AuthService', () => {
 
       expect(mockUsersService.findOneByEmail).toHaveBeenCalledWith(email);
       expect(mockedBcrypt.compare).toHaveBeenCalledWith(password, hashedPassword);
-      expect(result).toEqual({
-        id: 'admin-id',
-        username: 'admin',
-        email: 'admin@example.com',
-        roles: ['admin', 'user'],
-      });
+      expect(result).toEqual(
+        expect.objectContaining({
+          id: 'admin-id',
+          username: 'admin',
+          email: 'admin@example.com',
+          roles: ['admin', 'user'],
+        }),
+      );
     });
   });
 
@@ -262,15 +278,18 @@ describe('AuthService', () => {
         username: 'newuser',
         sub: 'new-user-id',
       });
-      expect(result).toEqual({
-        access_token: 'new_jwt_token',
-        user: {
-          id: 'new-user-id',
-          username: 'newuser',
-          email: 'new@example.com',
-          roles: ['user'],
-        },
-      });
+      expect(result).toEqual(
+        expect.objectContaining({
+          access_token: 'new_jwt_token',
+          user: {
+            id: 'new-user-id',
+            username: 'newuser',
+            email: 'new@example.com',
+            roles: ['user'],
+          },
+          confirmation_link: expect.any(String),
+        }),
+      );
     });
 
     it('should throw error when user with email already exists', async () => {
@@ -350,15 +369,18 @@ describe('AuthService', () => {
       expect(mockUsersService.findOneByEmail).toHaveBeenCalledWith(email);
       expect(mockUsersService.findOneByUsername).toHaveBeenCalledWith(username);
       expect(mockUsersService.createUser).toHaveBeenCalledWith(username, email, password);
-      expect(result).toEqual({
-        access_token: 'special_jwt_token',
-        user: {
-          id: 'special-user-id',
-          username: 'test_user-123',
-          email: 'special@example.com',
-          roles: ['user'],
-        },
-      });
+      expect(result).toEqual(
+        expect.objectContaining({
+          access_token: 'special_jwt_token',
+          user: {
+            id: 'special-user-id',
+            username: 'test_user-123',
+            email: 'special@example.com',
+            roles: ['user'],
+          },
+          confirmation_link: expect.any(String),
+        }),
+      );
     });
 
     it('should handle long password during registration', async () => {
@@ -391,15 +413,18 @@ describe('AuthService', () => {
       expect(mockUsersService.findOneByEmail).toHaveBeenCalledWith(email);
       expect(mockUsersService.findOneByUsername).toHaveBeenCalledWith(username);
       expect(mockUsersService.createUser).toHaveBeenCalledWith(username, email, password);
-      expect(result).toEqual({
-        access_token: 'longpass_jwt_token',
-        user: {
-          id: 'longpass-user-id',
-          username: 'longpassuser',
-          email: 'longpass@example.com',
-          roles: ['user'],
-        },
-      });
+      expect(result).toEqual(
+        expect.objectContaining({
+          access_token: 'longpass_jwt_token',
+          user: {
+            id: 'longpass-user-id',
+            username: 'longpassuser',
+            email: 'longpass@example.com',
+            roles: ['user'],
+          },
+          confirmation_link: expect.any(String),
+        }),
+      );
     });
 
     it('should handle database errors during user creation', async () => {

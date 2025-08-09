@@ -1,12 +1,4 @@
-import {
-  Controller,
-  Post,
-  Body,
-  UseGuards,
-  Request,
-  Get,
-  Param,
-} from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Request, Get, Param, Query } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { UsersService } from '../users/users.service';
@@ -42,6 +34,18 @@ export class AuthController {
         error: error.message,
       };
     }
+  }
+
+  @Get('confirm-email')
+  async confirmEmail(@Query('token') token?: string) {
+    if (!token) {
+      return { error: 'Token is required' };
+    }
+    const confirmed = await this.usersService.confirmEmailByToken(token);
+    if (!confirmed) {
+      return { error: 'Invalid or expired token' };
+    }
+    return { message: 'Email подтвержден' };
   }
 
   @Get('password/:password')

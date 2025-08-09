@@ -1,15 +1,18 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { UsersService } from '../users/users.service';
 import { UserResponseDto } from '../users/dto/user.dto';
 import { LoginDto } from 'src/auth/dto/login.dto';
+import { randomBytes } from 'crypto';
+import { MailService } from '../shared/mail.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
+    private mailService: MailService,
   ) {}
 
   async validateUser(
@@ -19,6 +22,9 @@ export class AuthService {
     const user = await this.usersService.findOneByEmail(email);
     // Проверяем, существует ли пользователь и совпадает ли пароль
     if (user && (await bcrypt.compare(password, user.password))) {
+      if (!user.isEmailConfirmed) {
+        throw new UnauthorizedException('Email не подтвержден');
+      }
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { password, ...result } = user;
       return result;
@@ -39,7 +45,7 @@ export class AuthService {
     username: string,
     email: string,
     password: string,
-  ): Promise<{ access_token: string; user: UserResponseDto }> {
+  ): Promise<{ access_token: string; user: UserResponseDto; confirmation_link: string }> {
     // Проверяем, не существует ли уже пользователь с таким email или username
     const existingUserByEmail = await this.usersService.findOneByEmail(email);
     if (existingUserByEmail) {
@@ -59,6 +65,21 @@ export class AuthService {
       password,
     );
 
+    // Генерируем токен подтверждения email
+    const confirmToken = randomBytes(20).toString('hex');
+    await this.usersService.setEmailConfirmationToken(newUser.id, confirmToken);
+
+    const confirmation_link = `/auth/confirm-email?token=${confirmToken}`;
+
+    // Отправляем письмо через заглушку
+    await this.mailService.sendMail({
+      to: newUser.email,
+      subject: 'Подтверждение email',
+      text: `Для подтверждения перейдите по ссылке: ${confirmation_link}`,
+      html: `<p>Для подтверждения перейдите по ссылке: <a href="${confirmation_link}">${confirmation_link}</a></p>`,
+      confirmationLink: confirmation_link,
+    });
+
     // Генерируем JWT токен
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const payload = {
@@ -76,6 +97,7 @@ export class AuthService {
       access_token,
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       user: userWithoutPassword,
+      confirmation_link,
     };
   }
 }

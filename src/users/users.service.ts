@@ -38,6 +38,7 @@ export class UsersService {
       email,
       password: hashedPassword,
       roles: ['user'], // По умолчанию роль пользователя
+      isEmailConfirmed: false,
     });
 
     return await newUser.save();
@@ -45,5 +46,28 @@ export class UsersService {
 
   async findOneByUsername(username: string): Promise<UserDocument | null> {
     return this.userModel.findOne({ username }).exec();
+  }
+
+  async setEmailConfirmationToken(
+    userId: string,
+    token: string,
+  ): Promise<UserDocument | null> {
+    return this.userModel
+      .findByIdAndUpdate(
+        userId,
+        { emailConfirmationToken: token },
+        { new: true },
+      )
+      .exec();
+  }
+
+  async confirmEmailByToken(token: string): Promise<UserDocument | null> {
+    const user = await this.userModel.findOne({ emailConfirmationToken: token });
+    if (!user) {
+      return null;
+    }
+    user.isEmailConfirmed = true;
+    user.emailConfirmationToken = undefined;
+    return user.save();
   }
 }
