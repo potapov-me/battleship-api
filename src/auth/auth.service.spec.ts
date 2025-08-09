@@ -287,7 +287,6 @@ describe('AuthService', () => {
             email: 'new@example.com',
             roles: ['user'],
           },
-          confirmation_link: expect.any(String),
         }),
       );
     });
@@ -378,7 +377,6 @@ describe('AuthService', () => {
             email: 'special@example.com',
             roles: ['user'],
           },
-          confirmation_link: expect.any(String),
         }),
       );
     });
@@ -422,7 +420,6 @@ describe('AuthService', () => {
             email: 'longpass@example.com',
             roles: ['user'],
           },
-          confirmation_link: expect.any(String),
         }),
       );
     });

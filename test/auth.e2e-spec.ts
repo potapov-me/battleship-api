@@ -74,7 +74,6 @@ describe('AuthController (e2e)', () => {
 
       expect(response.body).toHaveProperty('access_token');
       expect(response.body).toHaveProperty('user');
-      expect(response.body).toHaveProperty('confirmation_link');
       expect(response.body.user).toHaveProperty('id');
       expect(response.body.user.username).toBe(registerData.username);
       expect(response.body.user.email).toBe(registerData.email);
@@ -215,9 +214,9 @@ describe('AuthController (e2e)', () => {
       const regRes = await request(app.getHttpServer())
         .post('/auth/register')
         .send(registerData);
-      const link: string = regRes.body.confirmation_link;
-      const url = new URL('http://localhost' + link);
-      const token = url.searchParams.get('token');
+      // Получаем токен подтверждения из базы
+      const registered = await userModel.findOne({ email: registerData.email });
+      const token = registered?.emailConfirmationToken as string | undefined;
       expect(token).toBeTruthy();
       await request(app.getHttpServer())
         .get(`/auth/confirm-email`)
@@ -298,9 +297,8 @@ describe('AuthController (e2e)', () => {
       const registerResponse = await request(app.getHttpServer())
         .post('/auth/register')
         .send(registerData);
-      const link: string = registerResponse.body.confirmation_link;
-      const url = new URL('http://localhost' + link);
-      const token = url.searchParams.get('token');
+      const saved = await userModel.findOne({ email: registerData.email });
+      const token = saved?.emailConfirmationToken as string | undefined;
       await request(app.getHttpServer())
         .get(`/auth/confirm-email`)
         .query({ token })
@@ -401,9 +399,8 @@ describe('AuthController (e2e)', () => {
       expect(registerResponse.body).toHaveProperty('user');
       expect(registerResponse.body.user.username).toBe(registerData.username);
 
-      const link: string = registerResponse.body.confirmation_link;
-      const url = new URL('http://localhost' + link);
-      const token = url.searchParams.get('token');
+      const saved = await userModel.findOne({ email: registerData.email });
+      const token = saved?.emailConfirmationToken as string | undefined;
       await request(app.getHttpServer())
         .get(`/auth/confirm-email`)
         .query({ token })

@@ -45,7 +45,7 @@ export class AuthService {
     username: string,
     email: string,
     password: string,
-  ): Promise<{ access_token: string; user: UserResponseDto; confirmation_link: string }> {
+  ): Promise<{ access_token: string; user: UserResponseDto }> {
     // Проверяем, не существует ли уже пользователь с таким email или username
     const existingUserByEmail = await this.usersService.findOneByEmail(email);
     if (existingUserByEmail) {
@@ -91,13 +91,12 @@ export class AuthService {
 
     // Возвращаем токен и данные пользователя (без пароля)
     // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-unsafe-assignment
-    const { password: _unused, ...userWithoutPassword } = newUser.toObject();
+    const { password: _unused, id, isEmailConfirmed, roles, ...userWithoutPassword } = newUser.toObject();
 
     return {
       access_token,
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       user: userWithoutPassword,
-      confirmation_link,
     };
   }
 }
