@@ -36,6 +36,9 @@ npm run start:dev
 ```
 Приложение будет доступно на `http://localhost:3000` (или на значении `PORT` из `.env`).
 
+5) Swagger документация:
+После запуска приложения Swagger UI будет доступен по адресу `http://localhost:3000/api`
+
 ## Переменные окружения
 Поддерживаются следующие переменные (`example.env` содержит базовые значения):
 - `JWT_SECRET` — секрет для подписи JWT (обязательно)
@@ -58,6 +61,7 @@ npm run start:dev
 - `format` — Prettier форматирование
 - `check:main-db` — проверка подключения к основной БД (`scripts/check-main-db.js`)
 - `test:redis` — проверка подключения к Redis (`scripts/test-redis.js`)
+- `swagger` — доступ к Swagger UI после запуска приложения (`http://localhost:7001/api`)
 
 ## API
 ### Аутентификация (`/auth`)

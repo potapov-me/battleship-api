@@ -6,8 +6,15 @@ import {
   Matches,
   Length,
 } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
 
 export class RegisterDto {
+  @ApiProperty({
+    description: 'Имя пользователя',
+    example: 'john_doe',
+    minLength: 3,
+    maxLength: 30,
+  })
   @IsNotEmpty()
   @IsString()
   @Length(3, 30, { message: 'Username должен быть от 3 до 30 символов' })
@@ -20,6 +27,10 @@ export class RegisterDto {
   )
   username: string;
 
+  @ApiProperty({
+    description: 'Email пользователя',
+    example: 'john.doe@example.com',
+  })
   @IsNotEmpty()
   @IsEmail(
     {
@@ -37,6 +48,11 @@ export class RegisterDto {
   )
   email: string;
 
+  @ApiProperty({
+    description: 'Пароль пользователя',
+    example: 'password123',
+    minLength: 6,
+  })
   @IsNotEmpty()
   @IsString()
   @MinLength(6)
