@@ -7,6 +7,7 @@ import { RegisterDto } from './dto/register.dto';
 import { User } from 'src/users/schemas/user.schema';
 import { LoginDto } from 'src/auth/dto/login.dto';
 import { EmailFormatGuard } from './guards/email-format.guard';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -55,7 +56,7 @@ export class AuthController {
   }
 
   // Пример защищенного маршрута
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(JwtAuthGuard)
   @Post('profile')
   async getProfile(@Request() req: { user: Omit<User, 'password'> }) {
     if (!req.user.email) {

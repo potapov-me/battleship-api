@@ -8,6 +8,7 @@ import { AuthService } from './auth.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { LocalStrategy } from './strategies/local.strategy';
 import { EmailFormatGuard } from './guards/email-format.guard';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { MailService } from '../shared/mail.service';
 
 @Module({
@@ -25,7 +26,7 @@ import { MailService } from '../shared/mail.service';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, LocalStrategy, JwtStrategy, EmailFormatGuard],
+  providers: [AuthService, LocalStrategy, JwtStrategy, EmailFormatGuard, JwtAuthGuard],
   exports: [AuthService],
 })
 export class AuthModule {}

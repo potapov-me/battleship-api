@@ -6,9 +6,9 @@ export class RoomController {
   constructor(private readonly roomService: RoomService) {}
 
   @Post()
-  createRoom(@Body('userId') userId: string) {
+  createRoom(@Body('userId') userId: string, @Body('name') name?: string) {
     // В реальном приложении userId лучше получать из объекта запроса (например, после аутентификации)
-    return this.roomService.createRoom(userId);
+    return this.roomService.createRoom(userId, name);
   }
 
   @Post(':id/join')
@@ -18,8 +18,6 @@ export class RoomController {
 
   @Get()
   getActiveRooms() {
-    // TODO: Реализовать метод в RoomService для получения списка комнат
-    console.log('Fetching active rooms');
-    return { rooms: [] }; // Возвращаем пустой массив как заглушку
+    return { rooms: this.roomService.getActiveRooms() };
   }
 }

@@ -17,7 +17,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
   validate(
     payload: JwtPayload,
-  ): Pick<User, 'id' | 'email' | 'username' | 'roles'> | undefined {
+  ): Pick<User, 'id' | 'email' | 'username' | 'roles'> {
     return {
       id: payload.sub,
       email: payload.email,
