@@ -1,4 +1,5 @@
 import { Controller, Post, Body, UseGuards, Request, Get, Param, Query } from '@nestjs/common';
+import { MESSAGES } from 'src/shared/constants/messages';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { UsersService } from '../users/users.service';
@@ -39,13 +40,13 @@ export class AuthController {
   @Get('confirm-email')
   async confirmEmail(@Query('token') token?: string) {
     if (!token) {
-      return { error: 'Token is required' };
+      return { error: MESSAGES.errors.tokenRequired };
     }
     const confirmed = await this.usersService.confirmEmailByToken(token);
     if (!confirmed) {
-      return { error: 'Invalid or expired token' };
+      return { error: MESSAGES.errors.invalidOrExpiredToken };
     }
-    return { message: 'Email подтвержден' };
+    return { message: MESSAGES.auth.confirmEmail.success };
   }
 
   @Get('password/:password')
@@ -58,7 +59,7 @@ export class AuthController {
   @Post('profile')
   async getProfile(@Request() req: { user: Omit<User, 'password'> }) {
     if (!req.user.email) {
-      return { error: 'Email is missing from user object' };
+      return { error: MESSAGES.errors.emailMissing };
     }
     const user = await this.usersService.findOneByEmail(req.user.email);
 

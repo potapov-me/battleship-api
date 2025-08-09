@@ -1,4 +1,5 @@
 import { CanActivate, ExecutionContext, Injectable, BadRequestException } from '@nestjs/common';
+import { MESSAGES } from 'src/shared/constants/messages';
 import isEmail from 'validator/lib/isEmail';
 
 @Injectable()
@@ -8,7 +9,7 @@ export class EmailFormatGuard implements CanActivate {
     const email: unknown = request?.body?.email;
 
     if (typeof email !== 'string' || email.trim().length === 0) {
-      throw new BadRequestException('Некорректный email');
+      throw new BadRequestException(MESSAGES.errors.invalidEmail);
     }
 
     const isValid = isEmail(email, {
@@ -23,7 +24,7 @@ export class EmailFormatGuard implements CanActivate {
     const strictRegex = /^(?!.*\.\.)[A-Za-z0-9](?:[A-Za-z0-9._%+-]*[A-Za-z0-9])?@[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?)+$/;
 
     if (!isValid || !strictRegex.test(email)) {
-      throw new BadRequestException('Некорректный email');
+      throw new BadRequestException(MESSAGES.errors.invalidEmail);
     }
 
     return true;

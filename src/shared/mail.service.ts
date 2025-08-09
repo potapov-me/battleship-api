@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { SentMail } from 'src/shared/interfaces/mail.interface';
+import { MESSAGES } from './constants/messages';
 
 @Injectable()
 export class MailService {
@@ -21,9 +22,9 @@ export class MailService {
         ? mail.confirmationLink
         : `${normalizedDomain}${mail.confirmationLink.startsWith('/') ? '' : '/'}${mail.confirmationLink}`;
 
-      const subject = mail.subject || 'Подтверждение email';
-      const text = `Подтвердите ваш email: ${absoluteLink}`;
-      const html = `<p>Подтвердите ваш email по ссылке:</p><p><a href="${absoluteLink}">${absoluteLink}</a></p>`;
+      const subject = mail.subject || MESSAGES.auth.confirmEmail.subject;
+      const text = MESSAGES.auth.confirmEmail.text(absoluteLink);
+      const html = MESSAGES.auth.confirmEmail.html(absoluteLink);
 
       mail = { ...mail, subject, text, html, confirmationLink: absoluteLink };
     }

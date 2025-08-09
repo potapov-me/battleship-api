@@ -4,6 +4,7 @@ import { AuthService } from './auth.service';
 import { UsersService } from '../users/users.service';
 import * as bcrypt from 'bcrypt';
 import { MailService } from '../shared/mail.service';
+import { MESSAGES } from 'src/shared/constants/messages';
 
 // Мокаем bcrypt
 jest.mock('bcrypt');
@@ -304,7 +305,7 @@ describe('AuthService', () => {
       mockUsersService.findOneByEmail.mockResolvedValue(existingUser);
 
       await expect(service.register(username, email, password)).rejects.toThrow(
-        'Пользователь с таким email уже существует'
+        MESSAGES.errors.userExistsEmail
       );
 
       expect(mockUsersService.findOneByEmail).toHaveBeenCalledWith(email);
@@ -328,7 +329,7 @@ describe('AuthService', () => {
       mockUsersService.findOneByUsername.mockResolvedValue(existingUser);
 
       await expect(service.register(username, email, password)).rejects.toThrow(
-        'Пользователь с таким username уже существует'
+        MESSAGES.errors.userExistsUsername
       );
 
       expect(mockUsersService.findOneByEmail).toHaveBeenCalledWith(email);

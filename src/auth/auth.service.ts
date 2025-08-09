@@ -6,6 +6,7 @@ import { UserResponseDto } from '../users/dto/user.dto';
 import { LoginDto } from 'src/auth/dto/login.dto';
 import { randomBytes } from 'crypto';
 import { MailService } from '../shared/mail.service';
+import { MESSAGES } from 'src/shared/constants/messages';
 import { JwtPayload } from 'src/auth/interfaces/jwt-payload.interface';
 
 @Injectable()
@@ -24,7 +25,7 @@ export class AuthService {
     // Проверяем, существует ли пользователь и совпадает ли пароль
     if (user && (await bcrypt.compare(password, user.password))) {
       if (!user.isEmailConfirmed) {
-        throw new UnauthorizedException('Email не подтвержден');
+        throw new UnauthorizedException(MESSAGES.errors.emailNotConfirmed);
       }
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { password, ...result } = user;
@@ -50,13 +51,13 @@ export class AuthService {
     // Проверяем, не существует ли уже пользователь с таким email или username
     const existingUserByEmail = await this.usersService.findOneByEmail(email);
     if (existingUserByEmail) {
-      throw new Error('Пользователь с таким email уже существует');
+      throw new Error(MESSAGES.errors.userExistsEmail);
     }
 
     const existingUserByUsername =
       await this.usersService.findOneByUsername(username);
     if (existingUserByUsername) {
-      throw new Error('Пользователь с таким username уже существует');
+      throw new Error(MESSAGES.errors.userExistsUsername);
     }
 
     // Создаем нового пользователя
@@ -73,9 +74,9 @@ export class AuthService {
 
     await this.mailService.sendMail({
       to: newUser.email,
-      subject: 'Подтверждение email',
-      text: `Для подтверждения перейдите по ссылке: ${confirmation_link}`,
-      html: `<p>Для подтверждения перейдите по ссылке: <a href="${confirmation_link}">${confirmation_link}</a></p>`,
+      subject: MESSAGES.auth.confirmEmail.subject,
+      text: MESSAGES.auth.confirmEmail.text(confirmation_link),
+      html: MESSAGES.auth.confirmEmail.html(confirmation_link),
       confirmationLink: confirmation_link,
     });
 

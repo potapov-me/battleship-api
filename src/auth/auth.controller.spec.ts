@@ -6,6 +6,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { BadRequestException, UnauthorizedException } from '@nestjs/common';
+import { MESSAGES } from 'src/shared/constants/messages';
 
 describe('AuthController', () => {
   let controller: AuthController;
@@ -68,7 +69,7 @@ describe('AuthController', () => {
       (authService.login as jest.Mock).mockReturnValue(expectedToken);
 
       const result = controller.login(loginDto);
-      
+
       expect(result).toEqual(expectedToken);
       expect(authService.login).toHaveBeenCalledWith(loginDto);
     });
@@ -82,7 +83,7 @@ describe('AuthController', () => {
       (authService.login as jest.Mock).mockReturnValue(expectedToken);
 
       const result = controller.login(loginDto);
-      
+
       expect(result).toEqual(expectedToken);
       expect(authService.login).toHaveBeenCalledWith(loginDto);
     });
@@ -96,7 +97,7 @@ describe('AuthController', () => {
       (authService.login as jest.Mock).mockReturnValue(expectedToken);
 
       const result = controller.login(loginDto);
-      
+
       expect(result).toEqual(expectedToken);
       expect(authService.login).toHaveBeenCalledWith(loginDto);
     });
@@ -283,45 +284,61 @@ describe('AuthController', () => {
     it('should return a password hash for simple password', async () => {
       const password = 'password';
       const hash = 'hashed_password';
-      (usersService.generate_password_hash as jest.Mock).mockResolvedValue(hash);
+      (usersService.generate_password_hash as jest.Mock).mockResolvedValue(
+        hash,
+      );
 
       const result = await controller.getPasswordHash(password);
-      
+
       expect(result).toBe(hash);
-      expect(usersService.generate_password_hash).toHaveBeenCalledWith(password);
+      expect(usersService.generate_password_hash).toHaveBeenCalledWith(
+        password,
+      );
     });
 
     it('should return a password hash for complex password', async () => {
       const password = 'ComplexP@ssw0rd!123';
       const hash = 'complex_hashed_password';
-      (usersService.generate_password_hash as jest.Mock).mockResolvedValue(hash);
+      (usersService.generate_password_hash as jest.Mock).mockResolvedValue(
+        hash,
+      );
 
       const result = await controller.getPasswordHash(password);
-      
+
       expect(result).toBe(hash);
-      expect(usersService.generate_password_hash).toHaveBeenCalledWith(password);
+      expect(usersService.generate_password_hash).toHaveBeenCalledWith(
+        password,
+      );
     });
 
     it('should return a password hash for empty password', async () => {
       const password = '';
       const hash = 'empty_hashed_password';
-      (usersService.generate_password_hash as jest.Mock).mockResolvedValue(hash);
+      (usersService.generate_password_hash as jest.Mock).mockResolvedValue(
+        hash,
+      );
 
       const result = await controller.getPasswordHash(password);
-      
+
       expect(result).toBe(hash);
-      expect(usersService.generate_password_hash).toHaveBeenCalledWith(password);
+      expect(usersService.generate_password_hash).toHaveBeenCalledWith(
+        password,
+      );
     });
 
     it('should handle password hash generation errors', async () => {
       const password = 'password';
       const errorMessage = 'Hash generation failed';
       (usersService.generate_password_hash as jest.Mock).mockRejectedValue(
-        new Error(errorMessage)
+        new Error(errorMessage),
       );
 
-      await expect(controller.getPasswordHash(password)).rejects.toThrow(errorMessage);
-      expect(usersService.generate_password_hash).toHaveBeenCalledWith(password);
+      await expect(controller.getPasswordHash(password)).rejects.toThrow(
+        errorMessage,
+      );
+      expect(usersService.generate_password_hash).toHaveBeenCalledWith(
+        password,
+      );
     });
   });
 
@@ -342,10 +359,10 @@ describe('AuthController', () => {
         email: 'test@test.com',
         roles: ['user'],
       } as any;
-      
+
       (usersService.findOneByEmail as jest.Mock).mockResolvedValue(user);
       const result = await controller.getProfile({ user: reqUser });
-      
+
       expect(usersService.findOneByEmail).toHaveBeenCalledWith('test@test.com');
       expect(result).toEqual({
         username: 'test',
@@ -370,11 +387,13 @@ describe('AuthController', () => {
         email: 'admin@test.com',
         roles: ['admin', 'user'],
       } as any;
-      
+
       (usersService.findOneByEmail as jest.Mock).mockResolvedValue(adminUser);
       const result = await controller.getProfile({ user: reqUser });
-      
-      expect(usersService.findOneByEmail).toHaveBeenCalledWith('admin@test.com');
+
+      expect(usersService.findOneByEmail).toHaveBeenCalledWith(
+        'admin@test.com',
+      );
       expect(result).toEqual({
         username: 'admin',
         email: 'admin@test.com',
@@ -390,10 +409,10 @@ describe('AuthController', () => {
         email: 'test@test.com',
         roles: ['user'],
       } as any;
-      
+
       (usersService.findOneByEmail as jest.Mock).mockResolvedValue(null);
       const result = await controller.getProfile({ user: reqUser });
-      
+
       expect(usersService.findOneByEmail).toHaveBeenCalledWith('test@test.com');
       expect(result).toBeUndefined();
     });
@@ -405,19 +424,19 @@ describe('AuthController', () => {
         username: 'test',
         roles: ['user'],
       } as any;
-      
+
       const result = await controller.getProfile({ user: reqUser });
-      
-      expect(result).toEqual({ error: 'Email is missing from user object' });
+
+      expect(result).toEqual({ error: MESSAGES.errors.emailMissing });
       expect(usersService.findOneByEmail).not.toHaveBeenCalled();
     });
 
     it('should return an error if user object is empty', async () => {
       const reqUser = {} as any;
-      
+
       const result = await controller.getProfile({ user: reqUser });
-      
-      expect(result).toEqual({ error: 'Email is missing from user object' });
+
+      expect(result).toEqual({ error: MESSAGES.errors.emailMissing });
       expect(usersService.findOneByEmail).not.toHaveBeenCalled();
     });
 
@@ -429,13 +448,15 @@ describe('AuthController', () => {
         email: 'test@test.com',
         roles: ['user'],
       } as any;
-      
+
       const errorMessage = 'Database connection error';
       (usersService.findOneByEmail as jest.Mock).mockRejectedValue(
-        new Error(errorMessage)
+        new Error(errorMessage),
       );
-      
-      await expect(controller.getProfile({ user: reqUser })).rejects.toThrow(errorMessage);
+
+      await expect(controller.getProfile({ user: reqUser })).rejects.toThrow(
+        errorMessage,
+      );
       expect(usersService.findOneByEmail).toHaveBeenCalledWith('test@test.com');
     });
   });

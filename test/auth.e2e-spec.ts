@@ -5,6 +5,7 @@ import { TestAppModule } from './test-app.module';
 import { getModelToken } from '@nestjs/mongoose';
 import { User } from '../src/users/schemas/user.schema';
 import { Model } from 'mongoose';
+import { MESSAGES } from '../src/shared/constants/messages';
 
 describe('AuthController (e2e)', () => {
   let app: INestApplication;
@@ -54,9 +55,9 @@ describe('AuthController (e2e)', () => {
         expect(res.body).toHaveProperty('message');
         const message = res.body.message;
         if (Array.isArray(message)) {
-          expect(message.join(' ')).toMatch(/Некорректный email|email/i);
+          expect(message.join(' ')).toMatch(new RegExp(MESSAGES.errors.invalidEmail + '|email', 'i'));
         } else {
-          expect(String(message)).toMatch(/Некорректный email|email/i);
+          expect(String(message)).toMatch(new RegExp(MESSAGES.errors.invalidEmail + '|email', 'i'));
         }
       }
     });
@@ -115,7 +116,7 @@ describe('AuthController (e2e)', () => {
         .expect(201); // API возвращает 201 даже при ошибке
 
       expect(response.body).toHaveProperty('error');
-      expect(response.body.error).toBe('Пользователь с таким email уже существует');
+      expect(response.body.error).toBe(MESSAGES.errors.userExistsEmail);
     });
 
     it('should return error when registering with existing username', async () => {
@@ -144,7 +145,7 @@ describe('AuthController (e2e)', () => {
         .expect(201); // API возвращает 201 даже при ошибке
 
       expect(response.body).toHaveProperty('error');
-      expect(response.body.error).toBe('Пользователь с таким username уже существует');
+      expect(response.body.error).toBe(MESSAGES.errors.userExistsUsername);
     });
 
     it('should handle special characters in username', async () => {
@@ -258,9 +259,9 @@ describe('AuthController (e2e)', () => {
         expect(response.body).toHaveProperty('message');
         const message = response.body.message;
         if (Array.isArray(message)) {
-          expect(message.join(' ')).toMatch(/Некорректный email|email/i);
+          expect(message.join(' ')).toMatch(new RegExp(MESSAGES.errors.invalidEmail + '|email', 'i'));
         } else {
-          expect(String(message)).toMatch(/Некорректный email|email/i);
+          expect(String(message)).toMatch(new RegExp(MESSAGES.errors.invalidEmail + '|email', 'i'));
         }
       }
     });
@@ -277,7 +278,7 @@ describe('AuthController (e2e)', () => {
         .expect(401);
 
       expect(response.body).toHaveProperty('message');
-      expect(response.body.message).toBe('Unauthorized');
+      expect(response.body.message).toBe(MESSAGES.errors.unauthorized);
     });
   });
 
@@ -327,7 +328,7 @@ describe('AuthController (e2e)', () => {
         .expect(401);
 
       expect(response.body).toHaveProperty('message');
-      expect(response.body.message).toBe('Unauthorized');
+      expect(response.body.message).toBe(MESSAGES.errors.unauthorized);
     });
 
     it('should return error without token', async () => {
