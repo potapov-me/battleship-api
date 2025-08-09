@@ -5,6 +5,7 @@ export enum GameStatus {
   WAITING = 'waiting',
   ACTIVE = 'active',
   FINISHED = 'finished',
+  CANCELLED = 'cancelled',
 }
 
 export class Game {
@@ -15,4 +16,23 @@ export class Game {
   board2: Board;
   currentTurn: string; // ID игрока
   status: GameStatus;
+  winner?: User;
+  createdAt: Date;
+  startedAt?: Date;
+  finishedAt?: Date;
+  lastActivityAt: Date;
+  settings?: GameSettings;
+}
+
+export interface GameSettings {
+  boardSize: number;
+  shipTypes: ShipTypeConfig[];
+  timeLimit?: number; // в секундах
+  allowSpectators: boolean;
+}
+
+export interface ShipTypeConfig {
+  type: string;
+  size: number;
+  count: number;
 }

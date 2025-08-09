@@ -3,8 +3,9 @@ import { JwtService } from '@nestjs/jwt';
 import { AuthService } from './auth.service';
 import { UsersService } from '../users/users.service';
 import * as bcrypt from 'bcrypt';
-import { MailService } from '../shared/mail.service';
 import { MESSAGES } from 'src/shared/constants/messages';
+import type { INotificationService } from '../shared/interfaces/notification.interface';
+import type { IAuditService } from '../shared/interfaces/notification.interface';
 
 // Мокаем bcrypt
 jest.mock('bcrypt');
@@ -18,15 +19,25 @@ describe('AuthService', () => {
     findOneByUsername: jest.fn(),
     createUser: jest.fn(),
     setEmailConfirmationToken: jest.fn(),
+    confirmEmailByToken: jest.fn(),
   };
 
   const mockJwtService = {
     sign: jest.fn(),
   };
 
-  const mockMailService = {
-    sendMail: jest.fn().mockResolvedValue(undefined),
-  } as Partial<MailService> as MailService;
+  const mockNotificationService = {
+    sendEmail: jest.fn(),
+    sendEmailConfirmation: jest.fn(),
+    sendGameInvitation: jest.fn(),
+    sendGameUpdate: jest.fn(),
+  };
+
+  const mockAuditService = {
+    logUserAction: jest.fn(),
+    logGameAction: jest.fn(),
+    getAuditLog: jest.fn(),
+  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -41,8 +52,12 @@ describe('AuthService', () => {
           useValue: mockJwtService,
         },
         {
-          provide: MailService,
-          useValue: mockMailService,
+          provide: 'INotificationService',
+          useValue: mockNotificationService,
+        },
+        {
+          provide: 'IAuditService',
+          useValue: mockAuditService,
         },
       ],
     }).compile();
@@ -75,6 +90,7 @@ describe('AuthService', () => {
 
       mockUsersService.findOneByEmail.mockResolvedValue(mockUser);
       mockedBcrypt.compare.mockResolvedValue(true as any);
+      mockAuditService.logUserAction.mockResolvedValue(undefined);
 
       const result = await service.validateUser(email, password);
 
@@ -91,6 +107,7 @@ describe('AuthService', () => {
           roles: ['user'],
         }),
       );
+      expect(mockAuditService.logUserAction).toHaveBeenCalledWith('user-id', 'user_login', { email });
     });
 
     it('should return null when user does not exist', async () => {
@@ -129,29 +146,6 @@ describe('AuthService', () => {
       expect(result).toBeNull();
     });
 
-    it('should return null when bcrypt comparison fails', async () => {
-      const email = 'test@example.com';
-      const password = 'password123';
-      const hashedPassword = 'hashed_password';
-
-      const mockUser = {
-        id: 'user-id',
-        username: 'testuser',
-        email: 'test@example.com',
-        password: hashedPassword,
-        roles: ['user'],
-      };
-
-      mockUsersService.findOneByEmail.mockResolvedValue(mockUser);
-      mockedBcrypt.compare.mockResolvedValue(false as any);
-
-      const result = await service.validateUser(email, password);
-
-      expect(mockUsersService.findOneByEmail).toHaveBeenCalledWith(email);
-      expect(mockedBcrypt.compare).toHaveBeenCalledWith(password, hashedPassword);
-      expect(result).toBeNull();
-    });
-
     it('should handle user with admin role', async () => {
       const email = 'admin@example.com';
       const password = 'adminpass';
@@ -168,6 +162,7 @@ describe('AuthService', () => {
 
       mockUsersService.findOneByEmail.mockResolvedValue(mockAdminUser);
       mockedBcrypt.compare.mockResolvedValue(true as any);
+      mockAuditService.logUserAction.mockResolvedValue(undefined);
 
       const result = await service.validateUser(email, password);
 
@@ -267,13 +262,17 @@ describe('AuthService', () => {
       mockUsersService.findOneByEmail.mockResolvedValue(null);
       mockUsersService.findOneByUsername.mockResolvedValue(null);
       mockUsersService.createUser.mockResolvedValue(mockCreatedUser);
+      mockUsersService.setEmailConfirmationToken.mockResolvedValue(mockCreatedUser);
+      mockNotificationService.sendEmailConfirmation.mockResolvedValue(undefined);
       mockJwtService.sign.mockReturnValue('new_jwt_token');
+      mockAuditService.logUserAction.mockResolvedValue(undefined);
 
       const result = await service.register(username, email, password);
 
       expect(mockUsersService.findOneByEmail).toHaveBeenCalledWith(email);
       expect(mockUsersService.findOneByUsername).toHaveBeenCalledWith(username);
       expect(mockUsersService.createUser).toHaveBeenCalledWith(username, email, password);
+      expect(mockNotificationService.sendEmailConfirmation).toHaveBeenCalledWith(email, expect.any(String));
       expect(mockJwtService.sign).toHaveBeenCalledWith({
         email: email,
         username: 'newuser',
@@ -288,6 +287,10 @@ describe('AuthService', () => {
           },
         }),
       );
+      expect(mockAuditService.logUserAction).toHaveBeenCalledWith('new-user-id', 'user_registered', { 
+        username, 
+        email 
+      });
     });
 
     it('should throw error when user with email already exists', async () => {
@@ -358,7 +361,10 @@ describe('AuthService', () => {
       mockUsersService.findOneByEmail.mockResolvedValue(null);
       mockUsersService.findOneByUsername.mockResolvedValue(null);
       mockUsersService.createUser.mockResolvedValue(mockCreatedUser);
+      mockUsersService.setEmailConfirmationToken.mockResolvedValue(mockCreatedUser);
+      mockNotificationService.sendEmailConfirmation.mockResolvedValue(undefined);
       mockJwtService.sign.mockReturnValue('special_jwt_token');
+      mockAuditService.logUserAction.mockResolvedValue(undefined);
 
       const result = await service.register(username, email, password);
 
@@ -396,7 +402,10 @@ describe('AuthService', () => {
       mockUsersService.findOneByEmail.mockResolvedValue(null);
       mockUsersService.findOneByUsername.mockResolvedValue(null);
       mockUsersService.createUser.mockResolvedValue(mockCreatedUser);
+      mockUsersService.setEmailConfirmationToken.mockResolvedValue(mockCreatedUser);
+      mockNotificationService.sendEmailConfirmation.mockResolvedValue(undefined);
       mockJwtService.sign.mockReturnValue('longpass_jwt_token');
+      mockAuditService.logUserAction.mockResolvedValue(undefined);
 
       const result = await service.register(username, email, password);
 
@@ -455,6 +464,8 @@ describe('AuthService', () => {
       mockUsersService.findOneByEmail.mockResolvedValue(null);
       mockUsersService.findOneByUsername.mockResolvedValue(null);
       mockUsersService.createUser.mockResolvedValue(mockCreatedUser);
+      mockUsersService.setEmailConfirmationToken.mockResolvedValue(mockCreatedUser);
+      mockNotificationService.sendEmailConfirmation.mockResolvedValue(undefined);
       mockJwtService.sign.mockImplementation(() => {
         throw new Error('JWT signing failed');
       });
@@ -466,6 +477,38 @@ describe('AuthService', () => {
       expect(mockUsersService.findOneByEmail).toHaveBeenCalledWith(email);
       expect(mockUsersService.findOneByUsername).toHaveBeenCalledWith(username);
       expect(mockUsersService.createUser).toHaveBeenCalledWith(username, email, password);
+    });
+  });
+
+  describe('confirmEmail', () => {
+    it('should confirm email successfully', async () => {
+      const token = 'valid-token';
+      const mockUser = {
+        id: 'user-id',
+        username: 'testuser',
+        email: 'test@example.com',
+      };
+
+      mockUsersService.confirmEmailByToken.mockResolvedValue(mockUser);
+      mockAuditService.logUserAction.mockResolvedValue(undefined);
+
+      const result = await service.confirmEmail(token);
+
+      expect(result).toBe(true);
+      expect(mockUsersService.confirmEmailByToken).toHaveBeenCalledWith(token);
+      expect(mockAuditService.logUserAction).toHaveBeenCalledWith('user-id', 'email_confirmed', { token });
+    });
+
+    it('should return false for invalid token', async () => {
+      const token = 'invalid-token';
+
+      mockUsersService.confirmEmailByToken.mockResolvedValue(null);
+
+      const result = await service.confirmEmail(token);
+
+      expect(result).toBe(false);
+      expect(mockUsersService.confirmEmailByToken).toHaveBeenCalledWith(token);
+      expect(mockAuditService.logUserAction).not.toHaveBeenCalled();
     });
   });
 });

@@ -14,6 +14,7 @@ export enum ShipDirection {
 export interface ShipPosition {
   x: number;
   y: number;
+  type: ShipType;
   direction: ShipDirection;
 }
 

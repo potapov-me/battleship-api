@@ -1,25 +1,51 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { GameService } from './game.service';
-import { RedisService } from '../shared/redis.service';
 import { Game, GameStatus } from '../shared/models/game.model';
 import { Board } from '../shared/models/board.model';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
+import { ShipType, ShipDirection } from '../shared/models/ship.model';
+import type { IGameEngine } from '../shared/interfaces/game-engine.interface';
+import type { IGameStateManager } from '../shared/interfaces/game-engine.interface';
+import type { IAuditService } from '../shared/interfaces/notification.interface';
+import type { INotificationService } from '../shared/interfaces/notification.interface';
 
 describe('GameService', () => {
   let service: GameService;
-  let redisService: RedisService;
+  let gameEngine: IGameEngine;
+  let gameStateManager: IGameStateManager;
+  let auditService: IAuditService;
+  let notificationService: INotificationService;
 
-  const mockRedisService = {
-    set: jest.fn(),
-    get: jest.fn(),
-    del: jest.fn(),
-    exists: jest.fn(),
-    keys: jest.fn(),
-    hset: jest.fn(),
-    hget: jest.fn(),
-    hgetall: jest.fn(),
-    hdel: jest.fn(),
-    expire: jest.fn(),
+  const mockGameEngine = {
+    validateShipPlacement: jest.fn(),
+    processAttack: jest.fn(),
+    checkWinCondition: jest.fn(),
+    generateEmptyBoard: jest.fn(),
+    placeShipsOnBoard: jest.fn(),
+  };
+
+  const mockGameStateManager = {
+    createGame: jest.fn(),
+    joinGame: jest.fn(),
+    startGame: jest.fn(),
+    endGame: jest.fn(),
+    getGameState: jest.fn(),
+    updateGameState: jest.fn(),
+    getGamesByPlayer: jest.fn(),
+    getActiveGames: jest.fn(),
+  };
+
+  const mockAuditService = {
+    logUserAction: jest.fn(),
+    logGameAction: jest.fn(),
+    getAuditLog: jest.fn(),
+  };
+
+  const mockNotificationService = {
+    sendEmail: jest.fn(),
+    sendEmailConfirmation: jest.fn(),
+    sendGameInvitation: jest.fn(),
+    sendGameUpdate: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -27,14 +53,29 @@ describe('GameService', () => {
       providers: [
         GameService,
         {
-          provide: RedisService,
-          useValue: mockRedisService,
+          provide: 'IGameEngine',
+          useValue: mockGameEngine,
+        },
+        {
+          provide: 'IGameStateManager',
+          useValue: mockGameStateManager,
+        },
+        {
+          provide: 'IAuditService',
+          useValue: mockAuditService,
+        },
+        {
+          provide: 'INotificationService',
+          useValue: mockNotificationService,
         },
       ],
     }).compile();
 
     service = module.get<GameService>(GameService);
-    redisService = module.get<RedisService>(RedisService);
+    gameEngine = module.get<IGameEngine>('IGameEngine');
+    gameStateManager = module.get<IGameStateManager>('IGameStateManager');
+    auditService = module.get<IAuditService>('IAuditService');
+    notificationService = module.get<INotificationService>('INotificationService');
   });
 
   afterEach(() => {
@@ -47,166 +88,87 @@ describe('GameService', () => {
 
   describe('createGame', () => {
     it('should create a new game successfully', async () => {
-      const mockGame = new Game();
-      mockGame.id = 'game_123';
-      mockGame.status = GameStatus.WAITING;
-
-      mockRedisService.set.mockResolvedValue(undefined);
-
-      const result = await service.createGame();
-
-      expect(result).toBeDefined();
-      expect(result.id).toBeDefined();
-      expect(result.status).toBe(GameStatus.WAITING);
-      expect(result.board1).toBeDefined();
-      expect(result.board2).toBeDefined();
-      expect(mockRedisService.set).toHaveBeenCalledWith(
-        `game:${result.id}`,
-        result,
-        3600,
-      );
-    });
-  });
-
-  describe('generateEmptyBoard', () => {
-    it('should generate a 10x10 board', () => {
-      const board = service.generateEmptyBoard();
-
-      expect(board).toBeDefined();
-      expect(board.grid).toHaveLength(10);
-      expect(board.grid[0]).toHaveLength(10);
-      expect(board.grid[9]).toHaveLength(10);
-    });
-
-    it('should have all cells with correct properties', () => {
-      const board = service.generateEmptyBoard();
-
-      for (let i = 0; i < 10; i++) {
-        for (let j = 0; j < 10; j++) {
-          const cell = board.grid[i][j];
-          expect(cell.x).toBe(i);
-          expect(cell.y).toBe(j);
-          expect(cell.isHit).toBe(false);
-        }
-      }
-    });
-  });
-
-  describe('validateShipPlacement', () => {
-    it('should return false for empty ships array', () => {
-      const board = service.generateEmptyBoard();
-      const ships = [];
-
-      const result = service.validateShipPlacement(board, ships);
-
-      expect(result).toBe(false);
-    });
-
-    it('should return false for ships outside boundaries', () => {
-      const board = service.generateEmptyBoard();
-      const ships = [
-        { x: -1, y: 0 },
-        { x: 10, y: 5 },
-        { x: 5, y: -1 },
-        { x: 5, y: 10 },
-      ];
-
-      const result = service.validateShipPlacement(board, ships);
-
-      expect(result).toBe(false);
-    });
-
-    it('should return true for valid ship placement', () => {
-      const board = service.generateEmptyBoard();
-      const ships = [
-        { x: 0, y: 0 },
-        { x: 5, y: 5 },
-        { x: 9, y: 9 },
-      ];
-
-      const result = service.validateShipPlacement(board, ships);
-
-      expect(result).toBe(true);
-    });
-  });
-
-  describe('getGame', () => {
-    it('should return game from Redis', async () => {
+      const player1Id = 'player1';
+      const player2Id = 'player2';
       const gameId = 'game_123';
+      
       const mockGame = new Game();
       mockGame.id = gameId;
+      mockGame.status = GameStatus.WAITING;
+      mockGame.player1 = { id: player1Id } as any;
+      mockGame.player2 = { id: player2Id } as any;
 
-      mockRedisService.get.mockResolvedValue(mockGame);
+      mockGameStateManager.createGame.mockResolvedValue(gameId);
+      mockGameStateManager.getGameState.mockResolvedValue(mockGame);
+      mockAuditService.logGameAction.mockResolvedValue(undefined);
 
-      const result = await service.getGame(gameId);
+      const result = await service.createGame(player1Id, player2Id);
 
-      expect(result).toEqual(mockGame);
-      expect(mockRedisService.get).toHaveBeenCalledWith(`game:${gameId}`);
-    });
-
-    it('should return null for non-existent game', async () => {
-      const gameId = 'non-existent';
-
-      mockRedisService.get.mockResolvedValue(null);
-
-      const result = await service.getGame(gameId);
-
-      expect(result).toBeNull();
-      expect(mockRedisService.get).toHaveBeenCalledWith(`game:${gameId}`);
+      expect(result).toBeDefined();
+      expect(result.id).toBe(gameId);
+      expect(result.status).toBe(GameStatus.WAITING);
+      expect(mockGameStateManager.createGame).toHaveBeenCalledWith(player1Id, player2Id);
+      expect(mockGameStateManager.getGameState).toHaveBeenCalledWith(gameId);
+      expect(mockAuditService.logGameAction).toHaveBeenCalledWith(gameId, player1Id, 'game_created', { player2Id });
     });
   });
 
   describe('placeShips', () => {
     it('should place ships successfully', async () => {
       const gameId = 'game_123';
-      const userId = 'user_123';
-      const ships = [{ x: 0, y: 0 }, { x: 1, y: 1 }];
+      const playerId = 'player1';
+      const ships = [{ x: 0, y: 0, type: ShipType.CARRIER, direction: ShipDirection.HORIZONTAL }];
 
       const mockGame = new Game();
       mockGame.id = gameId;
-      mockGame.player1 = { id: userId } as any;
-      mockGame.board1 = service.generateEmptyBoard();
-      mockGame.board2 = service.generateEmptyBoard();
+      mockGame.status = GameStatus.WAITING;
+      mockGame.player1 = { id: playerId } as any;
+      mockGame.board1 = new Board();
+      mockGame.board2 = new Board();
 
-      mockRedisService.get.mockResolvedValue(mockGame);
-      mockRedisService.set.mockResolvedValue(undefined);
+      mockGameStateManager.getGameState.mockResolvedValue(mockGame);
+      mockGameEngine.validateShipPlacement.mockReturnValue(true);
+      mockGameEngine.placeShipsOnBoard.mockReturnValue(mockGame.board1);
+      mockGameStateManager.updateGameState.mockResolvedValue(true);
+      mockAuditService.logGameAction.mockResolvedValue(undefined);
 
-      const result = await service.placeShips(gameId, userId, ships);
+      const result = await service.placeShips(gameId, playerId, ships);
 
       expect(result.success).toBe(true);
-      expect(mockRedisService.set).toHaveBeenCalledWith(
-        `game:${gameId}`,
-        mockGame,
-        3600,
-      );
+      expect(mockGameEngine.validateShipPlacement).toHaveBeenCalledWith(mockGame.board1, ships);
+      expect(mockGameEngine.placeShipsOnBoard).toHaveBeenCalledWith(mockGame.board1, ships);
+      expect(mockGameStateManager.updateGameState).toHaveBeenCalledWith(gameId, mockGame);
+      expect(mockAuditService.logGameAction).toHaveBeenCalledWith(gameId, playerId, 'ships_placed', { shipCount: 1 });
     });
 
     it('should throw NotFoundException for non-existent game', async () => {
       const gameId = 'non-existent';
-      const userId = 'user_123';
-      const ships = [{ x: 0, y: 0 }];
+      const playerId = 'player1';
+      const ships = [{ x: 0, y: 0, type: ShipType.CARRIER, direction: ShipDirection.HORIZONTAL }];
 
-      mockRedisService.get.mockResolvedValue(null);
+      mockGameStateManager.getGameState.mockResolvedValue(null);
 
-      await expect(service.placeShips(gameId, userId, ships)).rejects.toThrow(
+      await expect(service.placeShips(gameId, playerId, ships)).rejects.toThrow(
         NotFoundException,
       );
     });
 
     it('should throw BadRequestException for invalid ship placement', async () => {
       const gameId = 'game_123';
-      const userId = 'user_123';
-      const ships = [{ x: -1, y: 0 }]; // Invalid placement
+      const playerId = 'player1';
+      const ships = [{ x: -1, y: 0, type: ShipType.CARRIER, direction: ShipDirection.HORIZONTAL }];
 
       const mockGame = new Game();
       mockGame.id = gameId;
-      mockGame.player1 = { id: userId } as any;
-      mockGame.board1 = service.generateEmptyBoard();
-      mockGame.board2 = service.generateEmptyBoard();
+      mockGame.status = GameStatus.WAITING;
+      mockGame.player1 = { id: playerId } as any;
+      mockGame.board1 = new Board();
+      mockGame.board2 = new Board();
 
-      mockRedisService.get.mockResolvedValue(mockGame);
+      mockGameStateManager.getGameState.mockResolvedValue(mockGame);
+      mockGameEngine.validateShipPlacement.mockReturnValue(false);
 
-      await expect(service.placeShips(gameId, userId, ships)).rejects.toThrow(
+      await expect(service.placeShips(gameId, playerId, ships)).rejects.toThrow(
         BadRequestException,
       );
     });
@@ -215,58 +177,126 @@ describe('GameService', () => {
   describe('makeShot', () => {
     it('should make a shot successfully', async () => {
       const gameId = 'game_123';
-      const userId = 'user_123';
+      const playerId = 'player1';
       const x = 5;
       const y = 5;
 
       const mockGame = new Game();
       mockGame.id = gameId;
       mockGame.status = GameStatus.ACTIVE;
-      mockGame.currentTurn = userId;
-      mockGame.player1 = { id: userId } as any;
-      mockGame.player2 = { id: 'user_456' } as any;
-      mockGame.board1 = service.generateEmptyBoard();
-      mockGame.board2 = service.generateEmptyBoard();
+      mockGame.currentTurn = playerId;
+      mockGame.player1 = { id: playerId } as any;
+      mockGame.player2 = { id: 'player2' } as any;
+      mockGame.board1 = new Board();
+      mockGame.board2 = new Board();
 
-      mockRedisService.get.mockResolvedValue(mockGame);
-      mockRedisService.set.mockResolvedValue(undefined);
+      const attackResult = { hit: true, sunk: false };
 
-      const result = await service.makeShot(gameId, userId, x, y);
+      mockGameStateManager.getGameState.mockResolvedValue(mockGame);
+      mockGameEngine.processAttack.mockReturnValue(attackResult);
+      mockGameEngine.checkWinCondition.mockReturnValue(false);
+      mockGameStateManager.updateGameState.mockResolvedValue(true);
+      mockAuditService.logGameAction.mockResolvedValue(undefined);
+
+      const result = await service.makeShot(gameId, playerId, x, y);
 
       expect(result).toHaveProperty('hit');
       expect(result).toHaveProperty('sunk');
-      expect(typeof result.hit).toBe('boolean');
-      expect(typeof result.sunk).toBe('boolean');
+      expect(result).toHaveProperty('gameOver');
+      expect(result.hit).toBe(true);
+      expect(result.sunk).toBe(false);
+      expect(result.gameOver).toBe(false);
+      expect(mockGameEngine.processAttack).toHaveBeenCalledWith(mockGame.board2, x, y);
+      expect(mockGameStateManager.updateGameState).toHaveBeenCalledWith(gameId, mockGame);
     });
-  });
 
-  describe('checkWinCondition', () => {
-    it('should check win condition for existing game', async () => {
+    it('should handle game over when shot results in win', async () => {
       const gameId = 'game_123';
+      const playerId = 'player1';
+      const x = 5;
+      const y = 5;
 
       const mockGame = new Game();
       mockGame.id = gameId;
-      mockGame.board1 = service.generateEmptyBoard();
-      mockGame.board2 = service.generateEmptyBoard();
+      mockGame.status = GameStatus.ACTIVE;
+      mockGame.currentTurn = playerId;
+      mockGame.player1 = { id: playerId, email: 'player1@test.com', username: 'player1' } as any;
+      mockGame.player2 = { id: 'player2', email: 'player2@test.com', username: 'player2' } as any;
+      mockGame.board1 = new Board();
+      mockGame.board2 = new Board();
 
-      mockRedisService.get.mockResolvedValue(mockGame);
+      const attackResult = { hit: true, sunk: true };
 
-      const result = await service.checkWinCondition(gameId);
+      mockGameStateManager.getGameState.mockResolvedValue(mockGame);
+      mockGameEngine.processAttack.mockReturnValue(attackResult);
+      mockGameEngine.checkWinCondition.mockReturnValue(true);
+      mockGameStateManager.endGame.mockResolvedValue(true);
+      mockGameStateManager.updateGameState.mockResolvedValue(true);
+      mockNotificationService.sendGameUpdate.mockResolvedValue(undefined);
+      mockAuditService.logGameAction.mockResolvedValue(undefined);
 
-      expect(result).toHaveProperty('gameOver');
-      expect(result).toHaveProperty('winner');
-      expect(typeof result.gameOver).toBe('boolean');
-      expect(result.winner).toBeNull(); // No winner in empty game
+      const result = await service.makeShot(gameId, playerId, x, y);
+
+      expect(result.gameOver).toBe(true);
+      expect(mockGameStateManager.endGame).toHaveBeenCalledWith(gameId, playerId);
+      expect(mockNotificationService.sendGameUpdate).toHaveBeenCalledWith(
+        'player2@test.com',
+        gameId,
+        'Игра окончена! Победитель: player1'
+      );
+    });
+  });
+
+  describe('getGame', () => {
+    it('should return game from game state manager', async () => {
+      const gameId = 'game_123';
+      const mockGame = new Game();
+      mockGame.id = gameId;
+
+      mockGameStateManager.getGameState.mockResolvedValue(mockGame);
+
+      const result = await service.getGame(gameId);
+
+      expect(result).toEqual(mockGame);
+      expect(mockGameStateManager.getGameState).toHaveBeenCalledWith(gameId);
     });
 
-    it('should throw NotFoundException for non-existent game', async () => {
+    it('should return null for non-existent game', async () => {
       const gameId = 'non-existent';
 
-      mockRedisService.get.mockResolvedValue(null);
+      mockGameStateManager.getGameState.mockResolvedValue(null);
 
-      await expect(service.checkWinCondition(gameId)).rejects.toThrow(
-        NotFoundException,
-      );
+      const result = await service.getGame(gameId);
+
+      expect(result).toBeNull();
+      expect(mockGameStateManager.getGameState).toHaveBeenCalledWith(gameId);
+    });
+  });
+
+  describe('getGamesByPlayer', () => {
+    it('should return games for player', async () => {
+      const playerId = 'player1';
+      const mockGames = [new Game(), new Game()];
+
+      mockGameStateManager.getGamesByPlayer.mockResolvedValue(mockGames);
+
+      const result = await service.getGamesByPlayer(playerId);
+
+      expect(result).toEqual(mockGames);
+      expect(mockGameStateManager.getGamesByPlayer).toHaveBeenCalledWith(playerId);
+    });
+  });
+
+  describe('getActiveGames', () => {
+    it('should return active games', async () => {
+      const mockGames = [new Game(), new Game()];
+
+      mockGameStateManager.getActiveGames.mockResolvedValue(mockGames);
+
+      const result = await service.getActiveGames();
+
+      expect(result).toEqual(mockGames);
+      expect(mockGameStateManager.getActiveGames).toHaveBeenCalled();
     });
   });
 });

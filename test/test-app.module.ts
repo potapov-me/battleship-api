@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
+import { ThrottlerModule } from '@nestjs/throttler';
 import type { Connection } from 'mongoose';
 
 import { AuthModule } from '../src/auth/auth.module';
@@ -26,6 +27,12 @@ import { SharedModule } from '../src/shared/shared.module';
         }),
       ],
     }),
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60000,
+        limit: 10,
+      },
+    ]),
     SharedModule,
     MongooseModule.forRootAsync({
       imports: [ConfigModule],

@@ -1,72 +1,74 @@
-import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
-import { Board, Cell } from 'src/shared/models/board.model';
+import { Injectable, NotFoundException, BadRequestException, Logger, Inject } from '@nestjs/common';
+import { Board } from 'src/shared/models/board.model';
 import { Game, GameStatus } from 'src/shared/models/game.model';
 import { ShipPosition } from '../shared/models/ship.model';
-import { RedisService } from '../shared/redis.service';
+import type { IGameEngine } from '../shared/interfaces/game-engine.interface';
+import type { IGameStateManager } from '../shared/interfaces/game-engine.interface';
+import type { IAuditService } from '../shared/interfaces/notification.interface';
+import type { INotificationService } from '../shared/interfaces/notification.interface';
 
 @Injectable()
 export class GameService {
   private readonly logger = new Logger(GameService.name);
 
-  constructor(private readonly redisService: RedisService) {}
+  constructor(
+    @Inject('IGameEngine') private readonly gameEngine: IGameEngine,
+    @Inject('IGameStateManager') private readonly gameStateManager: IGameStateManager,
+    @Inject('IAuditService') private readonly auditService: IAuditService,
+    @Inject('INotificationService') private readonly notificationService: INotificationService,
+  ) {}
 
-  async createGame(): Promise<Game> {
-    const game = new Game();
-    game.id = this.generateGameId();
-    game.status = GameStatus.WAITING;
-    game.board1 = this.generateEmptyBoard();
-    game.board2 = this.generateEmptyBoard();
+  async createGame(player1Id: string, player2Id: string): Promise<Game> {
+    const gameId = await this.gameStateManager.createGame(player1Id, player2Id);
+    const game = await this.gameStateManager.getGameState(gameId);
     
-    // Сохранить в Redis
-    await this.redisService.set(`game:${game.id}`, game, 3600); // TTL 1 hour
+    await this.auditService.logGameAction(gameId, player1Id, 'game_created', { player2Id });
     
-    this.logger.log(`Created new game: ${game.id}`);
+    this.logger.log(`Created new game: ${gameId}`);
     return game;
   }
 
-  private generateGameId(): string {
-    return `game_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-  }
-
-  generateEmptyBoard(): Board {
-    const board = new Board();
-    board.grid = [];
-    for (let i = 0; i < 10; i++) {
-      board.grid[i] = [];
-      for (let j = 0; j < 10; j++) {
-        const cell = new Cell();
-        cell.x = i;
-        cell.y = j;
-        cell.isHit = false;
-        board.grid[i][j] = cell;
-      }
+  async placeShips(gameId: string, playerId: string, ships: ShipPosition[]): Promise<{ success: boolean }> {
+    const game = await this.gameStateManager.getGameState(gameId);
+    if (!game) {
+      throw new NotFoundException('Game not found');
     }
-    return board;
-  }
 
-  validateShipPlacement(board: Board, ships: ShipPosition[]): boolean {
-    // TODO: Implement comprehensive ship placement validation
-    // - Корабли не выходят за границы
-    // - Не пересекаются
-    // - Правильное количество каждого типа
-    // - Соприкасаются только углами (не боками)
+    if (game.status !== GameStatus.WAITING) {
+      throw new BadRequestException('Cannot place ships in active game');
+    }
+
+    // Определяем, какую доску обновлять
+    const isPlayer1 = game.player1.id === playerId;
+    const targetBoard = isPlayer1 ? game.board1 : game.board2;
+
+    // Валидируем размещение кораблей
+    if (!this.gameEngine.validateShipPlacement(targetBoard, ships)) {
+      throw new BadRequestException('Invalid ship placement');
+    }
+
+    // Размещаем корабли
+    const updatedBoard = this.gameEngine.placeShipsOnBoard(targetBoard, ships);
     
-    if (!ships || ships.length === 0) {
-      return false;
+    if (isPlayer1) {
+      game.board1 = updatedBoard;
+    } else {
+      game.board2 = updatedBoard;
     }
 
-    // Basic validation - check if ships are within board boundaries
-    for (const ship of ships) {
-      if (ship.x < 0 || ship.x >= 10 || ship.y < 0 || ship.y >= 10) {
-        return false;
-      }
+    // Проверяем, готовы ли оба игрока
+    if (this.areShipsPlaced(game.board1) && this.areShipsPlaced(game.board2)) {
+      await this.gameStateManager.startGame(gameId);
     }
 
-    return true;
+    await this.gameStateManager.updateGameState(gameId, game);
+    await this.auditService.logGameAction(gameId, playerId, 'ships_placed', { shipCount: ships.length });
+
+    return { success: true };
   }
 
-  async processAttack(gameId: string, x: number, y: number, playerId: string): Promise<{ hit: boolean; sunk: boolean; gameOver: boolean }> {
-    const game = await this.getGame(gameId);
+  async makeShot(gameId: string, playerId: string, x: number, y: number): Promise<{ hit: boolean; sunk: boolean; gameOver: boolean }> {
+    const game = await this.gameStateManager.getGameState(gameId);
     if (!game) {
       throw new NotFoundException('Game not found');
     }
@@ -79,125 +81,60 @@ export class GameService {
       throw new BadRequestException('Not your turn');
     }
 
-    // Determine which board to attack
-    const targetBoard = game.player1.id === playerId ? game.board2 : game.board1;
+    // Определяем, какую доску атаковать
+    const isPlayer1 = game.player1.id === playerId;
+    const targetBoard = isPlayer1 ? game.board2 : game.board1;
+
+    // Обрабатываем атаку
+    const attackResult = this.gameEngine.processAttack(targetBoard, x, y);
     
-    if (x < 0 || x >= 10 || y < 0 || y >= 10) {
-      throw new BadRequestException('Invalid coordinates');
+    // Обновляем доску
+    if (isPlayer1) {
+      game.board2 = targetBoard;
+    } else {
+      game.board1 = targetBoard;
     }
 
-    const cell = targetBoard.grid[x][y];
-    if (cell.isHit) {
-      throw new BadRequestException('Cell already hit');
-    }
-
-    // Mark cell as hit
-    cell.isHit = true;
+    // Проверяем условия победы
+    const gameOver = this.gameEngine.checkWinCondition(targetBoard);
     
-    // Check if ship was hit (simplified logic)
-    const hit = Math.random() > 0.7; // 30% chance of hit for demo
-    const sunk = hit && Math.random() > 0.8; // 20% chance of sunk if hit
-    
-    // Switch turns
-    game.currentTurn = game.currentTurn === game.player1.id ? game.player2.id : game.player1.id;
-    
-    // Check win condition
-    const gameOver = this.checkGameWinCondition(game);
     if (gameOver) {
-      game.status = GameStatus.FINISHED;
-    }
-    
-    // Save updated game state
-    await this.redisService.set(`game:${gameId}`, game, 3600);
-    
-    return { hit, sunk, gameOver };
-  }
-
-  async placeShips(gameId: string, userId: string, ships: ShipPosition[]): Promise<{ success: boolean }> {
-    const game = await this.getGame(gameId);
-    if (!game) {
-      throw new NotFoundException('Game not found');
+      await this.gameStateManager.endGame(gameId, playerId);
+      await this.notificationService.sendGameUpdate(
+        isPlayer1 ? game.player2.email : game.player1.email,
+        gameId,
+        `Игра окончена! Победитель: ${isPlayer1 ? game.player1.username : game.player2.username}`
+      );
+    } else {
+      // Передаем ход другому игроку
+      game.currentTurn = isPlayer1 ? game.player2.id : game.player1.id;
     }
 
-    if (!this.validateShipPlacement(game.board1, ships)) {
-      throw new BadRequestException('Invalid ship placement');
-    }
+    await this.gameStateManager.updateGameState(gameId, game);
+    await this.auditService.logGameAction(gameId, playerId, 'shot_made', { 
+      x, y, hit: attackResult.hit, sunk: attackResult.sunk 
+    });
 
-    // Determine which board to update
-    const targetBoard = game.player1.id === userId ? game.board1 : game.board2;
-    
-    // Place ships on the board
-    for (const ship of ships) {
-      if (ship.x >= 0 && ship.x < 10 && ship.y >= 0 && ship.y < 10) {
-        targetBoard.grid[ship.x][ship.y].shipId = `ship_${ship.x}_${ship.y}_${Date.now()}`;
-      }
-    }
-
-    // Check if both players have placed ships
-    if (this.areShipsPlaced(game.board1) && this.areShipsPlaced(game.board2)) {
-      game.status = GameStatus.ACTIVE;
-      game.currentTurn = game.player1.id; // Player 1 goes first
-    }
-
-    // Save updated game state
-    await this.redisService.set(`game:${gameId}`, game, 3600);
-    
-    return { success: true };
-  }
-
-  private areShipsPlaced(board: Board): boolean {
-    // Simplified check - in real implementation, check for proper ship placement
-    return board.grid.some(row => row.some(cell => cell.shipId));
-  }
-
-  async makeShot(gameId: string, userId: string, x: number, y: number): Promise<{ hit: boolean; sunk: boolean }> {
-    const result = await this.processAttack(gameId, x, y, userId);
-    return { hit: result.hit, sunk: result.sunk };
-  }
-
-  private checkGameWinCondition(game: Game): boolean {
-    // Simplified win condition - check if all cells with ships are hit
-    const board1Destroyed = this.isBoardDestroyed(game.board1);
-    const board2Destroyed = this.isBoardDestroyed(game.board2);
-    
-    return board1Destroyed || board2Destroyed;
-  }
-
-  private isBoardDestroyed(board: Board): boolean {
-    // Check if all ships are destroyed
-    for (let i = 0; i < 10; i++) {
-      for (let j = 0; j < 10; j++) {
-        const cell = board.grid[i][j];
-        if (cell.shipId && !cell.isHit) {
-          return false;
-        }
-      }
-    }
-    return true;
+    return {
+      hit: attackResult.hit,
+      sunk: attackResult.sunk,
+      gameOver
+    };
   }
 
   async getGame(gameId: string): Promise<Game | null> {
-    return await this.redisService.get<Game>(`game:${gameId}`);
+    return await this.gameStateManager.getGameState(gameId);
   }
 
-  async checkWinCondition(gameId: string): Promise<{ gameOver: boolean; winner: string | null }> {
-    const game = await this.getGame(gameId);
-    if (!game) {
-      throw new NotFoundException('Game not found');
-    }
+  async getGamesByPlayer(playerId: string): Promise<Game[]> {
+    return await this.gameStateManager.getGamesByPlayer(playerId);
+  }
 
-    const gameOver = this.checkGameWinCondition(game);
-    let winner: string | null = null;
-    
-    if (gameOver) {
-      // Проверяем, что игроки существуют перед обращением к их id
-      if (this.isBoardDestroyed(game.board1) && game.player2?.id) {
-        winner = game.player2.id;
-      } else if (this.isBoardDestroyed(game.board2) && game.player1?.id) {
-        winner = game.player1.id;
-      }
-    }
+  async getActiveGames(): Promise<Game[]> {
+    return await this.gameStateManager.getActiveGames();
+  }
 
-    return { gameOver, winner };
+  private areShipsPlaced(board: Board): boolean {
+    return board.ships && board.ships.length > 0;
   }
 }

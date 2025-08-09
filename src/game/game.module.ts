@@ -3,11 +3,12 @@ import { GameController } from './game.controller';
 import { GameService } from './game.service';
 import { RoomController } from './room.controller';
 import { RoomService } from './room.service';
-import { RedisModule } from '../shared/redis.module';
+import { SharedModule } from '../shared/shared.module';
 
 @Module({
-  imports: [RedisModule],
+  imports: [SharedModule],
   controllers: [GameController, RoomController],
   providers: [GameService, RoomService],
+  exports: [GameService, RoomService],
 })
 export class GameModule {}

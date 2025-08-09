@@ -7,6 +7,8 @@ import { MongooseModule } from '@nestjs/mongoose';
 import type { Connection } from 'mongoose';
 import { SharedModule } from './shared/shared.module';
 import { ThrottlerModule } from '@nestjs/throttler';
+import { GameModule } from './game/game.module';
+import { UsersModule } from './users/users.module';
 
 @Module({
   imports: [
@@ -15,6 +17,11 @@ import { ThrottlerModule } from '@nestjs/throttler';
       {
         ttl: 60000, // 1 minute
         limit: 100, // 100 requests per minute
+      },
+      {
+        ttl: 60000, // 1 minute
+        limit: 5, // 5 login attempts per minute
+        name: 'auth',
       },
     ]),
     SharedModule,
@@ -35,6 +42,8 @@ import { ThrottlerModule } from '@nestjs/throttler';
       inject: [ConfigService],
     }),
     AuthModule,
+    UsersModule,
+    GameModule,
   ],
   controllers: [AppController],
   providers: [AppService],
