@@ -13,6 +13,7 @@ import { UsersService } from '../users/users.service';
 import { RegisterDto } from './dto/register.dto';
 import { User } from 'src/users/schemas/user.schema';
 import { LoginDto } from 'src/auth/dto/login.dto';
+import { EmailFormatGuard } from './guards/email-format.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -21,7 +22,7 @@ export class AuthController {
     private readonly usersService: UsersService,
   ) {}
 
-  @UseGuards(AuthGuard('local'))
+  @UseGuards(EmailFormatGuard, AuthGuard('local'))
   @Post('login')
   login(@Body() login: LoginDto) {
     return this.authService.login(login);

@@ -31,6 +31,35 @@ describe('AuthController (e2e)', () => {
   });
 
   describe('/auth/register (POST)', () => {
+    it('should reject invalid emails (register)', async () => {
+      const invalidEmails = [
+        'plainaddress',
+        '@nouser.com',
+        'user@',
+        'user@no-tld',
+        'user@.invalid.com',
+        'user..dots@example.com',
+        'user@example',
+        'user@example..com',
+        ' user@example.com ',
+        'consta!!ntin@potapov.me',
+      ];
+
+      for (const email of invalidEmails) {
+        const res = await request(app.getHttpServer())
+          .post('/auth/register')
+          .send({ username: 'u_' + Math.random().toString(36).slice(2, 7), email, password: 'password123' })
+          .expect(400);
+
+        expect(res.body).toHaveProperty('message');
+        const message = res.body.message;
+        if (Array.isArray(message)) {
+          expect(message.join(' ')).toMatch(/Некорректный email|email/i);
+        } else {
+          expect(String(message)).toMatch(/Некорректный email|email/i);
+        }
+      }
+    });
     it('should register a new user successfully', async () => {
       const registerData = {
         username: 'testuser',
@@ -121,19 +150,39 @@ describe('AuthController (e2e)', () => {
     });
 
     it('should handle special characters in username', async () => {
-      const registerData = {
-        username: 'test_user-123',
-        email: 'special@example.com',
-        password: 'password123',
-      };
+      // Разрешенные символы: буквы, цифры, точка, дефис, подчеркивание (без подряд и без них в начале/конце)
+      const okUsernames = ['test_user-123', 'user.name', 'user-name', 'user_name'];
+      for (const username of okUsernames) {
+        const registerData = {
+          username,
+          email: `${username.replace(/[^a-z0-9]/gi, '')}_${Math.random()
+            .toString(36)
+            .slice(2, 7)}@example.com`,
+          password: 'password123',
+        };
 
-      const response = await request(app.getHttpServer())
-        .post('/auth/register')
-        .send(registerData)
-        .expect(201);
+        const response = await request(app.getHttpServer())
+          .post('/auth/register')
+          .send(registerData)
+          .expect(201);
 
-      expect(response.body).toHaveProperty('access_token');
-      expect(response.body.user.username).toBe(registerData.username);
+        expect(response.body).toHaveProperty('access_token');
+        expect(response.body.user.username).toBe(registerData.username);
+      }
+    });
+
+    it('should reject invalid username with special symbols or consecutive specials', async () => {
+      const badUsernames = ['potapov!!', '.startsWithDot', '-startsWithDash', 'endsWithDot.', 'double..dot', 'name__two', 'name--two'];
+      for (const username of badUsernames) {
+        const res = await request(app.getHttpServer())
+          .post('/auth/register')
+          .send({ username, email: `ok_${Math.random().toString(36).slice(2, 7)}@example.com`, password: 'password123' })
+          .expect(400);
+
+        expect(res.body).toHaveProperty('message');
+        const message = res.body.message;
+        expect(String(Array.isArray(message) ? message.join(' ') : message)).toMatch(/username|Некорректный username/i);
+      }
     });
 
     it('should handle long password', async () => {
@@ -184,18 +233,30 @@ describe('AuthController (e2e)', () => {
     });
 
     it('should return error with invalid email', async () => {
-      const loginData = {
-        email: 'nonexistent@example.com',
-        password: 'password123',
-      };
+      const invalidEmails = [
+        'plainaddress',
+        'user@',
+        '@nouser.com',
+        'user@example',
+        'user@example..com',
+        ' user@example.com ',
+        'consta!!ntin@potapov.me',
+      ];
 
-      const response = await request(app.getHttpServer())
-        .post('/auth/login')
-        .send(loginData)
-        .expect(401);
+      for (const email of invalidEmails) {
+        const response = await request(app.getHttpServer())
+          .post('/auth/login')
+          .send({ email, password: 'password123' })
+          .expect(400);
 
-      expect(response.body).toHaveProperty('message');
-      expect(response.body.message).toBe('Unauthorized');
+        expect(response.body).toHaveProperty('message');
+        const message = response.body.message;
+        if (Array.isArray(message)) {
+          expect(message.join(' ')).toMatch(/Некорректный email|email/i);
+        } else {
+          expect(String(message)).toMatch(/Некорректный email|email/i);
+        }
+      }
     });
 
     it('should return error with invalid password', async () => {

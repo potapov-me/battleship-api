@@ -9,6 +9,8 @@ import { GameModule } from '../src/game/game.module';
 import { PlayersModule } from '../src/players/players.module';
 import { AppController } from '../src/app.controller';
 import { AppService } from '../src/app.service';
+import { APP_PIPE } from '@nestjs/core';
+import { ValidationPipe } from '@nestjs/common';
 
 @Module({
   imports: [
@@ -16,8 +18,8 @@ import { AppService } from '../src/app.service';
       isGlobal: true,
       load: [
         () => ({
-          JWT_SECRET: 'GLADIUS',
-          PORT: 7002,
+          JWT_SECRET: 'GLADIUS22',
+          PORT: 7001,
           MONGO_URI: 'mongodb://localhost:27017/battleship-test',
           NODE_ENV: 'test',
         }),
@@ -45,6 +47,20 @@ import { AppService } from '../src/app.service';
     PlayersModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_PIPE,
+      useFactory: () =>
+        new ValidationPipe({
+          whitelist: true,
+          forbidNonWhitelisted: true,
+          transform: true,
+          transformOptions: { enableImplicitConversion: true },
+          stopAtFirstError: true,
+          validationError: { target: false },
+        }),
+    },
+  ],
 })
 export class TestAppModule {}
