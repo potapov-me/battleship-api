@@ -6,6 +6,7 @@ import { UserResponseDto } from '../users/dto/user.dto';
 import { LoginDto } from 'src/auth/dto/login.dto';
 import { randomBytes } from 'crypto';
 import { MailService } from '../shared/mail.service';
+import { JwtPayload } from 'src/auth/interfaces/jwt-payload.interface';
 
 @Injectable()
 export class AuthService {
@@ -65,13 +66,11 @@ export class AuthService {
       password,
     );
 
-    // Генерируем токен подтверждения email
     const confirmToken = randomBytes(20).toString('hex');
     await this.usersService.setEmailConfirmationToken(newUser.id, confirmToken);
 
     const confirmation_link = `/auth/confirm-email?token=${confirmToken}`;
 
-    // Отправляем письмо через заглушку
     await this.mailService.sendMail({
       to: newUser.email,
       subject: 'Подтверждение email',
@@ -81,8 +80,7 @@ export class AuthService {
     });
 
     // Генерируем JWT токен
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    const payload = {
+    const payload: JwtPayload = {
       email: newUser.email,
       username: newUser.username,
       sub: newUser.id,
@@ -90,7 +88,6 @@ export class AuthService {
     const access_token = this.jwtService.sign(payload);
 
     // Возвращаем токен и данные пользователя (без пароля)
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-unsafe-assignment
     const {
       password: _unused,
       id,

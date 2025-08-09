@@ -25,7 +25,7 @@ import { MailService } from '../shared/mail.service';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, LocalStrategy, JwtStrategy, EmailFormatGuard, MailService],
+  providers: [AuthService, LocalStrategy, JwtStrategy, EmailFormatGuard],
   exports: [AuthService],
 })
 export class AuthModule {}

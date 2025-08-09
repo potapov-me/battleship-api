@@ -11,6 +11,7 @@ import { AppController } from '../src/app.controller';
 import { AppService } from '../src/app.service';
 import { APP_PIPE } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
+import { SharedModule } from '../src/shared/shared.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { ValidationPipe } from '@nestjs/common';
         }),
       ],
     }),
+    SharedModule,
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
