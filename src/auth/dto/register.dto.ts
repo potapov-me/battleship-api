@@ -50,11 +50,14 @@ export class RegisterDto {
 
   @ApiProperty({
     description: 'Пароль пользователя',
-    example: 'password123',
-    minLength: 6,
+    example: 'Password123!',
+    minLength: 8,
   })
   @IsNotEmpty()
   @IsString()
-  @MinLength(6)
+  @MinLength(8, { message: 'Пароль должен содержать минимум 8 символов' })
+  @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, {
+    message: 'Пароль должен содержать хотя бы одну строчную букву, одну заглавную букву и одну цифру',
+  })
   password: string;
 }

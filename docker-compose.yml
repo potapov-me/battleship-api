@@ -1,66 +1,81 @@
+version: '3.8'
 
 services:
-#  battleship-api:
-#    build:
-#      context: .
-#      dockerfile: Dockerfile
-#    ports:
-#      - '3000:3000'
-#    depends_on:
-#      - mongo
-#      - postgres
-#      - redis
-#    environment:
-#      - DATABASE_URL=mongodb://mongo:27017/battleship
-#      - POSTGRES_HOST=postgres
-#      - POSTGRES_PORT=5432
-#      - REDIS_HOST=redis
-#      - REDIS_PORT=6379
+  battleship-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    ports:
+      - '7001:7001'
+    depends_on:
+      - mongo
+      - redis
+    environment:
+      - NODE_ENV=production
+      - PORT=7001
+      - MONGO_URI=mongodb://mongo:27017/sea-battle
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-key-change-in-production}
+      - JWT_EXPIRES_IN=24h
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7001/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   mongo:
-    image: mongo
+    image: mongo:7.0
     ports:
       - '27017:27017'
     volumes:
       - battleship-db:/data/db
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=password
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
-  express:
-    image: mongo-express
-    container_name: "express"
+  mongo-express:
+    image: mongo-express:1.0.0
+    container_name: "mongo-express"
     restart: always
     environment:
-      - ME_CONFIG_BASICAUTH_USERNAME=user
-      - ME_CONFIG_BASICAUTH_PASSWORD=sever321
-#      - ME_CONFIG_MONGODB_ADMINUSERNAME=${MONGO_ADMINUSERNAME}
-#      - ME_CONFIG_MONGODB_ADMINPASSWORD=${MONGO_ADMINPASSWORD}
+      - ME_CONFIG_BASICAUTH_USERNAME=admin
+      - ME_CONFIG_BASICAUTH_PASSWORD=password
+      - ME_CONFIG_MONGODB_ADMINUSERNAME=admin
+      - ME_CONFIG_MONGODB_ADMINPASSWORD=password
       - ME_CONFIG_MONGODB_SERVER=mongo
+      - ME_CONFIG_MONGODB_PORT=27017
     ports:
-      - 8081:8081
-    links:
-      - mongo:mongo
+      - '8081:8081'
+    depends_on:
+      mongo:
+        condition: service_healthy
     deploy:
       resources:
         limits:
           memory: 128m
-    depends_on:
-      - mongo
-
-  postgres:
-    image: postgres
-    ports:
-      - '5432:5432'
-    volumes:
-      - postgres-db:/var/lib/postgresql/data
-    environment:
-      - POSTGRES_DB=battleship
-      - POSTGRES_USER=user
-      - POSTGRES_PASSWORD=password
 
   redis:
-    image: redis
+    image: redis:7.2-alpine
     ports:
       - '6379:6379'
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
 volumes:
   battleship-db:
-  postgres-db:
+  redis-data:

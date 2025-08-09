@@ -21,9 +21,16 @@ describe('AppController (e2e)', () => {
 
   it('/ (GET)', async () => {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-    await request(app.getHttpServer())
+    const response = await request(app.getHttpServer())
       .get('/')
-      .expect(200)
-      .expect('Hello in battleship-api service!');
+      .expect(200);
+
+    expect(response.body).toHaveProperty('status', 'ok');
+    expect(response.body).toHaveProperty('timestamp');
+    expect(response.body).toHaveProperty('uptime');
+    expect(response.body).toHaveProperty('environment');
+    expect(typeof response.body.timestamp).toBe('string');
+    expect(typeof response.body.uptime).toBe('number');
+    expect(typeof response.body.environment).toBe('string');
   });
 });

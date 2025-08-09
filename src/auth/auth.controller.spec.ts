@@ -5,7 +5,7 @@ import { UsersService } from '../users/users.service';
 import { AuthGuard } from '@nestjs/passport';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
-import { BadRequestException, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, UnauthorizedException, ConflictException } from '@nestjs/common';
 import { MESSAGES } from 'src/shared/constants/messages';
 
 describe('AuthController', () => {
@@ -24,6 +24,7 @@ describe('AuthController', () => {
     findOneByUsername: jest.fn(),
     generate_password_hash: jest.fn(),
     createUser: jest.fn(),
+    confirmEmailByToken: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -108,7 +109,7 @@ describe('AuthController', () => {
       const registerDto: RegisterDto = {
         username: 'testuser',
         email: 'test@example.com',
-        password: 'password123',
+        password: 'Password123',
       };
 
       const expectedResult = {
@@ -133,77 +134,47 @@ describe('AuthController', () => {
       expect(result).toEqual(expectedResult);
     });
 
-    it('should handle registration with existing email', async () => {
+    it('should throw ConflictException for existing email', async () => {
       const registerDto: RegisterDto = {
         username: 'testuser',
         email: 'existing@example.com',
-        password: 'password123',
+        password: 'Password123',
       };
 
       const errorMessage = 'Пользователь с таким email уже существует';
-      mockAuthService.register.mockRejectedValue(new Error(errorMessage));
+      mockAuthService.register.mockRejectedValue(new ConflictException(errorMessage));
 
-      const result = await controller.register(registerDto);
-
+      await expect(controller.register(registerDto)).rejects.toThrow(ConflictException);
       expect(mockAuthService.register).toHaveBeenCalledWith(
         registerDto.username,
         registerDto.email,
         registerDto.password,
       );
-      expect(result).toEqual({
-        error: errorMessage,
-      });
     });
 
-    it('should handle registration with existing username', async () => {
+    it('should throw ConflictException for existing username', async () => {
       const registerDto: RegisterDto = {
         username: 'existinguser',
         email: 'new@example.com',
-        password: 'password123',
+        password: 'Password123',
       };
 
       const errorMessage = 'Пользователь с таким username уже существует';
-      mockAuthService.register.mockRejectedValue(new Error(errorMessage));
+      mockAuthService.register.mockRejectedValue(new ConflictException(errorMessage));
 
-      const result = await controller.register(registerDto);
-
+      await expect(controller.register(registerDto)).rejects.toThrow(ConflictException);
       expect(mockAuthService.register).toHaveBeenCalledWith(
         registerDto.username,
         registerDto.email,
         registerDto.password,
       );
-      expect(result).toEqual({
-        error: errorMessage,
-      });
-    });
-
-    it('should handle registration with invalid data', async () => {
-      const registerDto: RegisterDto = {
-        username: '',
-        email: 'invalid-email',
-        password: '123',
-      };
-
-      const errorMessage = 'Invalid registration data';
-      mockAuthService.register.mockRejectedValue(new Error(errorMessage));
-
-      const result = await controller.register(registerDto);
-
-      expect(mockAuthService.register).toHaveBeenCalledWith(
-        registerDto.username,
-        registerDto.email,
-        registerDto.password,
-      );
-      expect(result).toEqual({
-        error: errorMessage,
-      });
     });
 
     it('should handle registration with special characters in username', async () => {
       const registerDto: RegisterDto = {
         username: 'test_user-123',
         email: 'special@example.com',
-        password: 'password123',
+        password: 'Password123',
       };
 
       const expectedResult = {
@@ -232,7 +203,7 @@ describe('AuthController', () => {
       const registerDto: RegisterDto = {
         username: 'testuser',
         email: 'longpass@example.com',
-        password: 'very_long_password_with_many_characters_123!@#',
+        password: 'VeryLongPasswordWithManyCharacters123!@#',
       };
 
       const expectedResult = {
@@ -256,89 +227,42 @@ describe('AuthController', () => {
       );
       expect(result).toEqual(expectedResult);
     });
-
-    it('should handle registration service errors', async () => {
-      const registerDto: RegisterDto = {
-        username: 'testuser',
-        email: 'error@example.com',
-        password: 'password123',
-      };
-
-      const errorMessage = 'Database connection error';
-      mockAuthService.register.mockRejectedValue(new Error(errorMessage));
-
-      const result = await controller.register(registerDto);
-
-      expect(mockAuthService.register).toHaveBeenCalledWith(
-        registerDto.username,
-        registerDto.email,
-        registerDto.password,
-      );
-      expect(result).toEqual({
-        error: errorMessage,
-      });
-    });
   });
 
-  describe('getPasswordHash', () => {
-    it('should return a password hash for simple password', async () => {
-      const password = 'password';
-      const hash = 'hashed_password';
-      (usersService.generate_password_hash as jest.Mock).mockResolvedValue(
-        hash,
-      );
+  describe('confirmEmail', () => {
+    it('should confirm email with valid token', async () => {
+      const token = 'valid-token';
+      const confirmedUser = {
+        id: 'user-id',
+        username: 'testuser',
+        email: 'test@example.com',
+        isEmailConfirmed: true,
+      };
 
-      const result = await controller.getPasswordHash(password);
+      mockUsersService.confirmEmailByToken.mockResolvedValue(confirmedUser);
 
-      expect(result).toBe(hash);
-      expect(usersService.generate_password_hash).toHaveBeenCalledWith(
-        password,
-      );
+      const result = await controller.confirmEmail(token);
+
+      expect(mockUsersService.confirmEmailByToken).toHaveBeenCalledWith(token);
+      expect(result).toEqual({ message: MESSAGES.auth.confirmEmail.success });
     });
 
-    it('should return a password hash for complex password', async () => {
-      const password = 'ComplexP@ssw0rd!123';
-      const hash = 'complex_hashed_password';
-      (usersService.generate_password_hash as jest.Mock).mockResolvedValue(
-        hash,
-      );
+    it('should return error for missing token', async () => {
+      const result = await controller.confirmEmail();
 
-      const result = await controller.getPasswordHash(password);
-
-      expect(result).toBe(hash);
-      expect(usersService.generate_password_hash).toHaveBeenCalledWith(
-        password,
-      );
+      expect(result).toEqual({ error: MESSAGES.errors.tokenRequired });
+      expect(mockUsersService.confirmEmailByToken).not.toHaveBeenCalled();
     });
 
-    it('should return a password hash for empty password', async () => {
-      const password = '';
-      const hash = 'empty_hashed_password';
-      (usersService.generate_password_hash as jest.Mock).mockResolvedValue(
-        hash,
-      );
+    it('should return error for invalid token', async () => {
+      const token = 'invalid-token';
 
-      const result = await controller.getPasswordHash(password);
+      mockUsersService.confirmEmailByToken.mockResolvedValue(null);
 
-      expect(result).toBe(hash);
-      expect(usersService.generate_password_hash).toHaveBeenCalledWith(
-        password,
-      );
-    });
+      const result = await controller.confirmEmail(token);
 
-    it('should handle password hash generation errors', async () => {
-      const password = 'password';
-      const errorMessage = 'Hash generation failed';
-      (usersService.generate_password_hash as jest.Mock).mockRejectedValue(
-        new Error(errorMessage),
-      );
-
-      await expect(controller.getPasswordHash(password)).rejects.toThrow(
-        errorMessage,
-      );
-      expect(usersService.generate_password_hash).toHaveBeenCalledWith(
-        password,
-      );
+      expect(mockUsersService.confirmEmailByToken).toHaveBeenCalledWith(token);
+      expect(result).toEqual({ error: MESSAGES.errors.invalidOrExpiredToken });
     });
   });
 

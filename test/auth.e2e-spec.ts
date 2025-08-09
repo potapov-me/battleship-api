@@ -49,7 +49,7 @@ describe('AuthController (e2e)', () => {
       for (const email of invalidEmails) {
         const res = await request(app.getHttpServer())
           .post('/auth/register')
-          .send({ username: 'u_' + Math.random().toString(36).slice(2, 7), email, password: 'password123' })
+          .send({ username: 'u_' + Math.random().toString(36).slice(2, 7), email, password: 'Password123' })
           .expect(400);
 
         expect(res.body).toHaveProperty('message');
@@ -65,7 +65,7 @@ describe('AuthController (e2e)', () => {
       const registerData = {
         username: 'testuser',
         email: 'test@example.com',
-        password: 'password123',
+        password: 'Password123',
       };
 
       const response = await request(app.getHttpServer())
@@ -95,7 +95,7 @@ describe('AuthController (e2e)', () => {
       const firstUser = {
         username: 'firstuser',
         email: 'existing@example.com',
-        password: 'password123',
+        password: 'Password123',
       };
 
       await request(app.getHttpServer())
@@ -107,16 +107,16 @@ describe('AuthController (e2e)', () => {
       const secondUser = {
         username: 'seconduser',
         email: 'existing@example.com',
-        password: 'password456',
+        password: 'Password456',
       };
 
       const response = await request(app.getHttpServer())
         .post('/auth/register')
         .send(secondUser)
-        .expect(201); // API возвращает 201 даже при ошибке
+        .expect(409); // API возвращает 409 для конфликтов
 
-      expect(response.body).toHaveProperty('error');
-      expect(response.body.error).toBe(MESSAGES.errors.userExistsEmail);
+      expect(response.body).toHaveProperty('message');
+      expect(response.body.message).toBe(MESSAGES.errors.userExistsEmail);
     });
 
     it('should return error when registering with existing username', async () => {
@@ -124,7 +124,7 @@ describe('AuthController (e2e)', () => {
       const firstUser = {
         username: 'existinguser',
         email: 'first@example.com',
-        password: 'password123',
+        password: 'Password123',
       };
 
       await request(app.getHttpServer())
@@ -136,16 +136,16 @@ describe('AuthController (e2e)', () => {
       const secondUser = {
         username: 'existinguser',
         email: 'second@example.com',
-        password: 'password456',
+        password: 'Password456',
       };
 
       const response = await request(app.getHttpServer())
         .post('/auth/register')
         .send(secondUser)
-        .expect(201); // API возвращает 201 даже при ошибке
+        .expect(409); // API возвращает 409 для конфликтов
 
-      expect(response.body).toHaveProperty('error');
-      expect(response.body.error).toBe(MESSAGES.errors.userExistsUsername);
+      expect(response.body).toHaveProperty('message');
+      expect(response.body.message).toBe(MESSAGES.errors.userExistsUsername);
     });
 
     it('should handle special characters in username', async () => {
@@ -157,7 +157,7 @@ describe('AuthController (e2e)', () => {
           email: `${username.replace(/[^a-z0-9]/gi, '')}_${Math.random()
             .toString(36)
             .slice(2, 7)}@example.com`,
-          password: 'password123',
+          password: 'Password123',
         };
 
         const response = await request(app.getHttpServer())
@@ -175,7 +175,7 @@ describe('AuthController (e2e)', () => {
       for (const username of badUsernames) {
         const res = await request(app.getHttpServer())
           .post('/auth/register')
-          .send({ username, email: `ok_${Math.random().toString(36).slice(2, 7)}@example.com`, password: 'password123' })
+          .send({ username, email: `ok_${Math.random().toString(36).slice(2, 7)}@example.com`, password: 'Password123' })
           .expect(400);
 
         expect(res.body).toHaveProperty('message');
@@ -188,7 +188,7 @@ describe('AuthController (e2e)', () => {
       const registerData = {
         username: 'longpassuser',
         email: 'longpass@example.com',
-        password: 'very_long_password_with_many_characters_123!@#$%^&*()',
+        password: 'VeryLongPasswordWithManyCharacters123!@#$%^&*()',
       };
 
       const response = await request(app.getHttpServer())
@@ -207,7 +207,7 @@ describe('AuthController (e2e)', () => {
       const registerData = {
         username: 'logintest',
         email: 'login@example.com',
-        password: 'password123',
+        password: 'Password123',
       };
 
       const regRes = await request(app.getHttpServer())
@@ -226,7 +226,7 @@ describe('AuthController (e2e)', () => {
     it('should login successfully with valid credentials', async () => {
       const loginData = {
         email: 'login@example.com',
-        password: 'password123',
+        password: 'Password123',
       };
 
       const response = await request(app.getHttpServer())
@@ -253,7 +253,7 @@ describe('AuthController (e2e)', () => {
       for (const email of invalidEmails) {
         const response = await request(app.getHttpServer())
           .post('/auth/login')
-          .send({ email, password: 'password123' })
+          .send({ email, password: 'Password123' })
           .expect(400);
 
         expect(response.body).toHaveProperty('message');
@@ -290,7 +290,7 @@ describe('AuthController (e2e)', () => {
       const registerData = {
         username: 'profiletest',
         email: 'profile@example.com',
-        password: 'password123',
+        password: 'Password123',
       };
 
       const registerResponse = await request(app.getHttpServer())
@@ -341,44 +341,7 @@ describe('AuthController (e2e)', () => {
     });
   });
 
-  describe('/auth/password/:password (GET)', () => {
-    it('should return password hash', async () => {
-      const password = 'testpassword';
 
-      const response = await request(app.getHttpServer())
-        .get(`/auth/password/${password}`)
-        .expect(200);
-
-      expect(response.body).toBeDefined();
-      // API может возвращать объект или строку, проверяем оба варианта
-      if (typeof response.body === 'string') {
-        expect(response.body.length).toBeGreaterThan(0);
-        expect(response.body).not.toBe(password);
-      } else {
-        expect(typeof response.body).toBe('object');
-        // Даже если объект пустой, это нормально
-        expect(response.body).toBeDefined();
-      }
-    });
-
-    it('should handle special characters in password', async () => {
-      const password = 'ComplexP@ssw0rd!123';
-
-      const response = await request(app.getHttpServer())
-        .get(`/auth/password/${encodeURIComponent(password)}`)
-        .expect(200);
-
-      expect(response.body).toBeDefined();
-      // API может возвращать объект или строку, проверяем оба варианта
-      if (typeof response.body === 'string') {
-        expect(response.body.length).toBeGreaterThan(0);
-      } else {
-        expect(typeof response.body).toBe('object');
-        // Даже если объект пустой, это нормально
-        expect(response.body).toBeDefined();
-      }
-    });
-  });
 
   describe('Full authentication flow', () => {
     it('should complete full registration and login flow', async () => {
@@ -386,7 +349,7 @@ describe('AuthController (e2e)', () => {
       const registerData = {
         username: 'flowtest',
         email: 'flow@example.com',
-        password: 'password123',
+        password: 'Password123',
       };
 
       const registerResponse = await request(app.getHttpServer())

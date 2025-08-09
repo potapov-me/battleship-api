@@ -61,18 +61,12 @@ export class AuthController {
     type: ErrorResponseDto 
   })
   async register(@Body() registerDto: RegisterDto) {
-    try {
-      const result = await this.authService.register(
-        registerDto.username,
-        registerDto.email,
-        registerDto.password,
-      );
-      return result;
-    } catch (error) {
-      return {
-        error: error.message,
-      };
-    }
+    const result = await this.authService.register(
+      registerDto.username,
+      registerDto.email,
+      registerDto.password,
+    );
+    return result;
   }
 
   @Get('confirm-email')
@@ -112,27 +106,6 @@ export class AuthController {
       return { error: MESSAGES.errors.invalidOrExpiredToken };
     }
     return { message: MESSAGES.auth.confirmEmail.success };
-  }
-
-  @Get('password/:password')
-  @ApiOperation({ summary: 'Получить хеш пароля (только для разработки)' })
-  @ApiParam({ 
-    name: 'password', 
-    description: 'Пароль для хеширования',
-    example: 'password123'
-  })
-  @ApiResponse({ 
-    status: 200, 
-    description: 'Хеш пароля',
-    schema: {
-      type: 'object',
-      properties: {
-        hash: { type: 'string', example: '$2b$10$...' }
-      }
-    }
-  })
-  async getPasswordHash(@Param('password') password: string) {
-    return this.usersService.generate_password_hash(password);
   }
 
   @UseGuards(JwtAuthGuard)

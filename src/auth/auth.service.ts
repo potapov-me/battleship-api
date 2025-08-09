@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { UsersService } from '../users/users.service';
@@ -51,13 +51,13 @@ export class AuthService {
     // Проверяем, не существует ли уже пользователь с таким email или username
     const existingUserByEmail = await this.usersService.findOneByEmail(email);
     if (existingUserByEmail) {
-      throw new Error(MESSAGES.errors.userExistsEmail);
+      throw new ConflictException(MESSAGES.errors.userExistsEmail);
     }
 
     const existingUserByUsername =
       await this.usersService.findOneByUsername(username);
     if (existingUserByUsername) {
-      throw new Error(MESSAGES.errors.userExistsUsername);
+      throw new ConflictException(MESSAGES.errors.userExistsUsername);
     }
 
     // Создаем нового пользователя

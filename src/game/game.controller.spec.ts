@@ -15,4 +15,9 @@ describe('GameController', () => {
   it('should be defined', () => {
     expect(controller).toBeDefined();
   });
+
+  // GameController is currently empty, so we only test that it can be instantiated
+  it('should be an instance of GameController', () => {
+    expect(controller).toBeInstanceOf(GameController);
+  });
 });
