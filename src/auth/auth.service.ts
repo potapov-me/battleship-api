@@ -110,7 +110,7 @@ export class AuthService {
       if (error instanceof ConflictException) {
         throw error;
       }
-      throw new ConflictException('Failed to register user');
+      throw error;
     }
   }
 

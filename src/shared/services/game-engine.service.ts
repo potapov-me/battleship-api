@@ -45,8 +45,9 @@ export class GameEngineService implements IGameEngine {
     }
 
     for (const [shipType, required] of Object.entries(this.REQUIRED_SHIPS)) {
-      if ((shipCounts.get(shipType as ShipType) || 0) !== required) {
-        this.logger.warn(`Invalid ship count for ${shipType}: expected ${required}, got ${shipCounts.get(shipType as ShipType) || 0}`);
+      const actualCount = shipCounts.get(shipType.toLowerCase() as ShipType) || 0;
+      if (actualCount !== required) {
+        this.logger.warn(`Invalid ship count for ${shipType}: expected ${required}, got ${actualCount}`);
         return false;
       }
     }
@@ -69,7 +70,7 @@ export class GameEngineService implements IGameEngine {
   }
 
   private isValidShipPlacement(board: Board, ship: ShipPosition): boolean {
-    const size = this.SHIP_SIZES[ship.type as ShipType];
+    const size = this.SHIP_SIZES[ship.type.toUpperCase() as keyof typeof this.SHIP_SIZES];
     
     // Проверяем границы
     if (ship.direction === ShipDirection.HORIZONTAL) {
@@ -89,7 +90,7 @@ export class GameEngineService implements IGameEngine {
     const occupiedCells = new Set<string>();
 
     for (const ship of ships) {
-      const size = this.SHIP_SIZES[ship.type as ShipType];
+      const size = this.SHIP_SIZES[ship.type.toUpperCase() as keyof typeof this.SHIP_SIZES];
       
       for (let i = 0; i < size; i++) {
         let x: number, y: number;
@@ -118,8 +119,10 @@ export class GameEngineService implements IGameEngine {
       throw new Error('Invalid ship placement');
     }
 
-    const newBoard = { ...board };
+    const newBoard = new Board();
+    newBoard.grid = board.grid.map(row => row.map(cell => ({ ...cell })));
     newBoard.ships = [];
+    newBoard.playerId = board.playerId;
 
     for (const shipPosition of ships) {
       const ship = new Ship();
@@ -128,7 +131,7 @@ export class GameEngineService implements IGameEngine {
       ship.isSunk = false;
 
       // Размещаем корабль на доске
-      const size = this.SHIP_SIZES[ship.type];
+      const size = this.SHIP_SIZES[ship.type.toUpperCase() as keyof typeof this.SHIP_SIZES];
       for (let i = 0; i < size; i++) {
         let x: number, y: number;
         
@@ -178,7 +181,7 @@ export class GameEngineService implements IGameEngine {
   }
 
   private isShipSunk(board: Board, ship: Ship): boolean {
-    const size = this.SHIP_SIZES[ship.type];
+    const size = this.SHIP_SIZES[ship.type.toUpperCase() as keyof typeof this.SHIP_SIZES];
     let hitCount = 0;
 
     for (let i = 0; i < size; i++) {

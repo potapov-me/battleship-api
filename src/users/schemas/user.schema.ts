@@ -4,6 +4,7 @@ import { Document, Types } from 'mongoose';
 export type UserDocument = User & Document;
 
 @Schema({
+  timestamps: true,
   toJSON: {
     virtuals: true,
     transform: (doc, ret) => {
@@ -35,16 +36,16 @@ export class User {
   // Основной идентификатор MongoDB
   _id: Types.ObjectId;
 
-  @Prop({ required: true, unique: true })
+  @Prop({ required: true, unique: true, trim: true })
   username: string;
 
-  @Prop({ required: true, unique: true })
+  @Prop({ required: true, unique: true, lowercase: true, trim: true })
   email: string;
 
   @Prop({ required: true })
   password: string;
 
-  @Prop([String])
+  @Prop({ type: [String], default: ['player'] })
   roles: string[];
 
   @Prop({ default: false })
@@ -52,6 +53,39 @@ export class User {
 
   @Prop()
   emailConfirmationToken?: string;
+
+  @Prop()
+  emailConfirmationExpires?: Date;
+
+  @Prop({ default: 1000 })
+  rating: number;
+
+  @Prop({ default: 0 })
+  totalGames: number;
+
+  @Prop({ default: 0 })
+  wins: number;
+
+  @Prop({ default: 0 })
+  losses: number;
+
+  @Prop({ default: true })
+  isActive: boolean;
+
+  @Prop()
+  lastLoginAt?: Date;
+
+  @Prop()
+  avatar?: string;
+
+  @Prop()
+  bio?: string;
+
+  @Prop({ type: Date })
+  createdAt: Date;
+
+  @Prop({ type: Date })
+  updatedAt: Date;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
@@ -60,3 +94,16 @@ export const UserSchema = SchemaFactory.createForClass(User);
 UserSchema.virtual('id').get(function () {
   return this._id.toHexString();
 });
+
+// Добавляем виртуальное поле для процента побед
+UserSchema.virtual('winRate').get(function () {
+  if (this.totalGames === 0) return 0;
+  return Math.round((this.wins / this.totalGames) * 100);
+});
+
+// Индексы для оптимизации запросов
+UserSchema.index({ username: 1 });
+UserSchema.index({ email: 1 });
+UserSchema.index({ rating: -1 });
+UserSchema.index({ totalGames: -1 });
+UserSchema.index({ createdAt: -1 });
