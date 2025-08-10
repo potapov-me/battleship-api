@@ -35,7 +35,8 @@ describe('LoggingInterceptor', () => {
         handle: () => of({ data: 'test' }),
       };
 
-      jest.spyOn(Date, 'now')
+      jest
+        .spyOn(Date, 'now')
         .mockReturnValueOnce(1000) // First call for start time
         .mockReturnValueOnce(1100); // Second call for end time
 
@@ -65,7 +66,8 @@ describe('LoggingInterceptor', () => {
         handle: () => of({ success: true }),
       };
 
-      jest.spyOn(Date, 'now')
+      jest
+        .spyOn(Date, 'now')
         .mockReturnValueOnce(2000)
         .mockReturnValueOnce(2100);
 
@@ -94,7 +96,8 @@ describe('LoggingInterceptor', () => {
         handle: () => of({ updated: true }),
       };
 
-      jest.spyOn(Date, 'now')
+      jest
+        .spyOn(Date, 'now')
         .mockReturnValueOnce(3000)
         .mockReturnValueOnce(3050);
 
@@ -123,7 +126,8 @@ describe('LoggingInterceptor', () => {
         handle: () => of({ deleted: true }),
       };
 
-      jest.spyOn(Date, 'now')
+      jest
+        .spyOn(Date, 'now')
         .mockReturnValueOnce(4000)
         .mockReturnValueOnce(4100);
 
@@ -152,7 +156,8 @@ describe('LoggingInterceptor', () => {
         handle: () => of({ patched: true }),
       };
 
-      jest.spyOn(Date, 'now')
+      jest
+        .spyOn(Date, 'now')
         .mockReturnValueOnce(5000)
         .mockReturnValueOnce(5200);
 
@@ -181,7 +186,8 @@ describe('LoggingInterceptor', () => {
         handle: () => of({ result: 'heavy-data' }),
       };
 
-      jest.spyOn(Date, 'now')
+      jest
+        .spyOn(Date, 'now')
         .mockReturnValueOnce(10000)
         .mockReturnValueOnce(15000); // 5 seconds
 

@@ -22,12 +22,20 @@ describe('AuthController (e2e)', () => {
   });
 
   beforeEach(async () => {
-    // Очищаем базу данных перед каждым тестом
-    await userModel.deleteMany({});
+    try {
+      // Очищаем базу данных перед каждым тестом
+      await userModel.deleteMany({}).exec();
+    } catch (error) {
+      console.warn('Failed to clear database before test:', error.message);
+    }
   });
 
   afterAll(async () => {
-    await userModel.deleteMany({});
+    try {
+      await userModel.deleteMany({}).exec();
+    } catch (error) {
+      console.warn('Failed to clear database after tests:', error.message);
+    }
     await app.close();
   });
 
@@ -49,18 +57,27 @@ describe('AuthController (e2e)', () => {
       for (const email of invalidEmails) {
         const res = await request(app.getHttpServer())
           .post('/auth/register')
-          .send({ username: 'u_' + Math.random().toString(36).slice(2, 7), email, password: 'Password123' })
+          .send({
+            username: 'u_' + Math.random().toString(36).slice(2, 7),
+            email,
+            password: 'Password123',
+          })
           .expect(400);
 
         expect(res.body).toHaveProperty('message');
         const message = res.body.message;
         if (Array.isArray(message)) {
-          expect(message.join(' ')).toMatch(new RegExp(MESSAGES.errors.invalidEmail + '|email', 'i'));
+          expect(message.join(' ')).toMatch(
+            new RegExp(MESSAGES.errors.invalidEmail + '|email', 'i'),
+          );
         } else {
-          expect(String(message)).toMatch(new RegExp(MESSAGES.errors.invalidEmail + '|email', 'i'));
+          expect(String(message)).toMatch(
+            new RegExp(MESSAGES.errors.invalidEmail + '|email', 'i'),
+          );
         }
       }
     });
+
     it('should register a new user successfully', async () => {
       const registerData = {
         username: 'testuser',
@@ -80,7 +97,9 @@ describe('AuthController (e2e)', () => {
       expect(response.body.user).not.toHaveProperty('password');
 
       // Проверяем, что пользователь сохранен в базе данных
-      const savedUser = await userModel.findOne({ email: registerData.email });
+      const savedUser = await userModel
+        .findOne({ email: registerData.email })
+        .exec();
       expect(savedUser).toBeDefined();
       expect(savedUser).not.toBeNull();
       if (savedUser) {
@@ -150,7 +169,12 @@ describe('AuthController (e2e)', () => {
 
     it('should handle special characters in username', async () => {
       // Разрешенные символы: буквы, цифры, точка, дефис, подчеркивание (без подряд и без них в начале/конце)
-      const okUsernames = ['test_user-123', 'user.name', 'user-name', 'user_name'];
+      const okUsernames = [
+        'test_user-123',
+        'user.name',
+        'user-name',
+        'user_name',
+      ];
       for (const username of okUsernames) {
         const registerData = {
           username,
@@ -171,16 +195,30 @@ describe('AuthController (e2e)', () => {
     });
 
     it('should reject invalid username with special symbols or consecutive specials', async () => {
-      const badUsernames = ['potapov!!', '.startsWithDot', '-startsWithDash', 'endsWithDot.', 'double..dot', 'name__two', 'name--two'];
+      const badUsernames = [
+        'potapov!!',
+        '.startsWithDot',
+        '-startsWithDash',
+        'endsWithDot.',
+        'double..dot',
+        'name__two',
+        'name--two',
+      ];
       for (const username of badUsernames) {
         const res = await request(app.getHttpServer())
           .post('/auth/register')
-          .send({ username, email: `ok_${Math.random().toString(36).slice(2, 7)}@example.com`, password: 'Password123' })
+          .send({
+            username,
+            email: `ok_${Math.random().toString(36).slice(2, 7)}@example.com`,
+            password: 'Password123',
+          })
           .expect(400);
 
         expect(res.body).toHaveProperty('message');
         const message = res.body.message;
-        expect(String(Array.isArray(message) ? message.join(' ') : message)).toMatch(/username|Некорректный username/i);
+        expect(
+          String(Array.isArray(message) ? message.join(' ') : message),
+        ).toMatch(/username|Некорректный username/i);
       }
     });
 
@@ -214,8 +252,10 @@ describe('AuthController (e2e)', () => {
         .post('/auth/register')
         .send(registerData);
       // Получаем токен подтверждения из базы
-      const registered = await userModel.findOne({ email: registerData.email });
-      const token = registered?.emailConfirmationToken as string | undefined;
+      const registered = await userModel
+        .findOne({ email: registerData.email })
+        .exec();
+      const token = registered?.emailConfirmationToken;
       expect(token).toBeTruthy();
       await request(app.getHttpServer())
         .get(`/auth/confirm-email`)
@@ -259,9 +299,13 @@ describe('AuthController (e2e)', () => {
         expect(response.body).toHaveProperty('message');
         const message = response.body.message;
         if (Array.isArray(message)) {
-          expect(message.join(' ')).toMatch(new RegExp(MESSAGES.errors.invalidEmail + '|email', 'i'));
+          expect(message.join(' ')).toMatch(
+            new RegExp(MESSAGES.errors.invalidEmail + '|email', 'i'),
+          );
         } else {
-          expect(String(message)).toMatch(new RegExp(MESSAGES.errors.invalidEmail + '|email', 'i'));
+          expect(String(message)).toMatch(
+            new RegExp(MESSAGES.errors.invalidEmail + '|email', 'i'),
+          );
         }
       }
     });
@@ -296,8 +340,10 @@ describe('AuthController (e2e)', () => {
       const registerResponse = await request(app.getHttpServer())
         .post('/auth/register')
         .send(registerData);
-      const saved = await userModel.findOne({ email: registerData.email });
-      const token = saved?.emailConfirmationToken as string | undefined;
+      const saved = await userModel
+        .findOne({ email: registerData.email })
+        .exec();
+      const token = saved?.emailConfirmationToken;
       await request(app.getHttpServer())
         .get(`/auth/confirm-email`)
         .query({ token })
@@ -341,8 +387,6 @@ describe('AuthController (e2e)', () => {
     });
   });
 
-
-
   describe('Full authentication flow', () => {
     it('should complete full registration and login flow', async () => {
       // Шаг 1: Регистрация
@@ -361,8 +405,10 @@ describe('AuthController (e2e)', () => {
       expect(registerResponse.body).toHaveProperty('user');
       expect(registerResponse.body.user.username).toBe(registerData.username);
 
-      const saved = await userModel.findOne({ email: registerData.email });
-      const token = saved?.emailConfirmationToken as string | undefined;
+      const saved = await userModel
+        .findOne({ email: registerData.email })
+        .exec();
+      const token = saved?.emailConfirmationToken;
       await request(app.getHttpServer())
         .get(`/auth/confirm-email`)
         .query({ token })

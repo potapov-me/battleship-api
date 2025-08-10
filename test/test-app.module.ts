@@ -22,7 +22,8 @@ import { SharedModule } from '../src/shared/shared.module';
         () => ({
           JWT_SECRET: 'GLADIUS22',
           PORT: 7001,
-          MONGO_URI: 'mongodb://localhost:27017/battleship-test',
+          MONGO_URI:
+            'mongodb://admin:password@localhost:27017/battleship-test?authSource=admin',
           NODE_ENV: 'test',
         }),
       ],

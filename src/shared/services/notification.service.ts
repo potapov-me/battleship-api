@@ -21,7 +21,7 @@ export class NotificationService implements INotificationService {
         text: content,
         html: this.convertToHtml(content),
       });
-      
+
       this.logger.log(`Email sent to ${to}: ${subject}`);
     } catch (error) {
       this.logger.error(`Failed to send email to ${to}:`, error);
@@ -30,18 +30,28 @@ export class NotificationService implements INotificationService {
   }
 
   async sendEmailConfirmation(to: string, token: string): Promise<void> {
-    const domain = this.configService.get<string>('DOMAIN', 'http://localhost:3000');
+    const domain = this.configService.get<string>(
+      'DOMAIN',
+      'http://localhost:3000',
+    );
     const confirmationLink = `${domain}/auth/confirm-email?token=${token}`;
 
     await this.sendEmail(
       to,
       MESSAGES.auth.confirmEmail.subject,
-      MESSAGES.auth.confirmEmail.text(confirmationLink)
+      MESSAGES.auth.confirmEmail.text(confirmationLink),
     );
   }
 
-  async sendGameInvitation(to: string, gameId: string, inviterName: string): Promise<void> {
-    const domain = this.configService.get<string>('DOMAIN', 'http://localhost:3000');
+  async sendGameInvitation(
+    to: string,
+    gameId: string,
+    inviterName: string,
+  ): Promise<void> {
+    const domain = this.configService.get<string>(
+      'DOMAIN',
+      'http://localhost:3000',
+    );
     const gameLink = `${domain}/game/${gameId}`;
 
     const subject = 'Приглашение в игру Морской бой';
@@ -54,8 +64,15 @@ export class NotificationService implements INotificationService {
     await this.sendEmail(to, subject, content);
   }
 
-  async sendGameUpdate(to: string, gameId: string, update: string): Promise<void> {
-    const domain = this.configService.get<string>('DOMAIN', 'http://localhost:3000');
+  async sendGameUpdate(
+    to: string,
+    gameId: string,
+    update: string,
+  ): Promise<void> {
+    const domain = this.configService.get<string>(
+      'DOMAIN',
+      'http://localhost:3000',
+    );
     const gameLink = `${domain}/game/${gameId}`;
 
     const subject = 'Обновление игры Морской бой';

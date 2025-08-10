@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ShipType, ShipDirection } from '../../shared/models/ship.model';
 
 export class PlaceShipsDto {
   @ApiProperty({
@@ -21,20 +22,35 @@ export class PlaceShipsDto {
       properties: {
         x: { type: 'number', example: 0 },
         y: { type: 'number', example: 0 },
-        size: { type: 'number', example: 4 },
-        orientation: { type: 'string', enum: ['horizontal', 'vertical'], example: 'horizontal' },
+        type: {
+          type: 'string',
+          enum: Object.values(ShipType),
+          example: ShipType.BATTLESHIP,
+          description: 'Тип корабля',
+        },
+        direction: {
+          type: 'string',
+          enum: Object.values(ShipDirection),
+          example: ShipDirection.HORIZONTAL,
+          description: 'Направление корабля',
+        },
       },
     },
     example: [
-      { x: 0, y: 0, size: 4, orientation: 'horizontal' },
-      { x: 2, y: 2, size: 3, orientation: 'vertical' },
+      {
+        x: 0,
+        y: 0,
+        type: ShipType.BATTLESHIP,
+        direction: ShipDirection.HORIZONTAL,
+      },
+      { x: 2, y: 2, type: ShipType.CRUISER, direction: ShipDirection.VERTICAL },
     ],
   })
   ships: Array<{
     x: number;
     y: number;
-    size: number;
-    orientation: 'horizontal' | 'vertical';
+    type: ShipType;
+    direction: ShipDirection;
   }>;
 }
 
@@ -132,4 +148,3 @@ export class GameResponseDto {
   })
   winnerId?: string;
 }
-

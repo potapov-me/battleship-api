@@ -75,7 +75,9 @@ describe('GameService', () => {
     gameEngine = module.get<IGameEngine>('IGameEngine');
     gameStateManager = module.get<IGameStateManager>('IGameStateManager');
     auditService = module.get<IAuditService>('IAuditService');
-    notificationService = module.get<INotificationService>('INotificationService');
+    notificationService = module.get<INotificationService>(
+      'INotificationService',
+    );
   });
 
   afterEach(() => {
@@ -91,7 +93,7 @@ describe('GameService', () => {
       const player1Id = 'player1';
       const player2Id = 'player2';
       const gameId = 'game_123';
-      
+
       const mockGame = new Game();
       mockGame.id = gameId;
       mockGame.status = GameStatus.WAITING;
@@ -107,9 +109,17 @@ describe('GameService', () => {
       expect(result).toBeDefined();
       expect(result.id).toBe(gameId);
       expect(result.status).toBe(GameStatus.WAITING);
-      expect(mockGameStateManager.createGame).toHaveBeenCalledWith(player1Id, player2Id);
+      expect(mockGameStateManager.createGame).toHaveBeenCalledWith(
+        player1Id,
+        player2Id,
+      );
       expect(mockGameStateManager.getGameState).toHaveBeenCalledWith(gameId);
-      expect(mockAuditService.logGameAction).toHaveBeenCalledWith(gameId, player1Id, 'game_created', { player2Id });
+      expect(mockAuditService.logGameAction).toHaveBeenCalledWith(
+        gameId,
+        player1Id,
+        'game_created',
+        { player2Id },
+      );
     });
   });
 
@@ -117,7 +127,14 @@ describe('GameService', () => {
     it('should place ships successfully', async () => {
       const gameId = 'game_123';
       const playerId = 'player1';
-      const ships = [{ x: 0, y: 0, type: ShipType.CARRIER, direction: ShipDirection.HORIZONTAL }];
+      const ships = [
+        {
+          x: 0,
+          y: 0,
+          type: ShipType.CARRIER,
+          direction: ShipDirection.HORIZONTAL,
+        },
+      ];
 
       const mockGame = new Game();
       mockGame.id = gameId;
@@ -135,16 +152,37 @@ describe('GameService', () => {
       const result = await service.placeShips(gameId, playerId, ships);
 
       expect(result.success).toBe(true);
-      expect(mockGameEngine.validateShipPlacement).toHaveBeenCalledWith(mockGame.board1, ships);
-      expect(mockGameEngine.placeShipsOnBoard).toHaveBeenCalledWith(mockGame.board1, ships);
-      expect(mockGameStateManager.updateGameState).toHaveBeenCalledWith(gameId, mockGame);
-      expect(mockAuditService.logGameAction).toHaveBeenCalledWith(gameId, playerId, 'ships_placed', { shipCount: 1 });
+      expect(mockGameEngine.validateShipPlacement).toHaveBeenCalledWith(
+        mockGame.board1,
+        ships,
+      );
+      expect(mockGameEngine.placeShipsOnBoard).toHaveBeenCalledWith(
+        mockGame.board1,
+        ships,
+      );
+      expect(mockGameStateManager.updateGameState).toHaveBeenCalledWith(
+        gameId,
+        mockGame,
+      );
+      expect(mockAuditService.logGameAction).toHaveBeenCalledWith(
+        gameId,
+        playerId,
+        'ships_placed',
+        { shipCount: 1 },
+      );
     });
 
     it('should throw NotFoundException for non-existent game', async () => {
       const gameId = 'non-existent';
       const playerId = 'player1';
-      const ships = [{ x: 0, y: 0, type: ShipType.CARRIER, direction: ShipDirection.HORIZONTAL }];
+      const ships = [
+        {
+          x: 0,
+          y: 0,
+          type: ShipType.CARRIER,
+          direction: ShipDirection.HORIZONTAL,
+        },
+      ];
 
       mockGameStateManager.getGameState.mockResolvedValue(null);
 
@@ -156,7 +194,14 @@ describe('GameService', () => {
     it('should throw BadRequestException for invalid ship placement', async () => {
       const gameId = 'game_123';
       const playerId = 'player1';
-      const ships = [{ x: -1, y: 0, type: ShipType.CARRIER, direction: ShipDirection.HORIZONTAL }];
+      const ships = [
+        {
+          x: -1,
+          y: 0,
+          type: ShipType.CARRIER,
+          direction: ShipDirection.HORIZONTAL,
+        },
+      ];
 
       const mockGame = new Game();
       mockGame.id = gameId;
@@ -206,8 +251,15 @@ describe('GameService', () => {
       expect(result.hit).toBe(true);
       expect(result.sunk).toBe(false);
       expect(result.gameOver).toBe(false);
-      expect(mockGameEngine.processAttack).toHaveBeenCalledWith(mockGame.board2, x, y);
-      expect(mockGameStateManager.updateGameState).toHaveBeenCalledWith(gameId, mockGame);
+      expect(mockGameEngine.processAttack).toHaveBeenCalledWith(
+        mockGame.board2,
+        x,
+        y,
+      );
+      expect(mockGameStateManager.updateGameState).toHaveBeenCalledWith(
+        gameId,
+        mockGame,
+      );
     });
 
     it('should handle game over when shot results in win', async () => {
@@ -220,8 +272,16 @@ describe('GameService', () => {
       mockGame.id = gameId;
       mockGame.status = GameStatus.ACTIVE;
       mockGame.currentTurn = playerId;
-      mockGame.player1 = { id: playerId, email: 'player1@test.com', username: 'player1' } as any;
-      mockGame.player2 = { id: 'player2', email: 'player2@test.com', username: 'player2' } as any;
+      mockGame.player1 = {
+        id: playerId,
+        email: 'player1@test.com',
+        username: 'player1',
+      } as any;
+      mockGame.player2 = {
+        id: 'player2',
+        email: 'player2@test.com',
+        username: 'player2',
+      } as any;
       mockGame.board1 = new Board();
       mockGame.board2 = new Board();
 
@@ -238,11 +298,14 @@ describe('GameService', () => {
       const result = await service.makeShot(gameId, playerId, x, y);
 
       expect(result.gameOver).toBe(true);
-      expect(mockGameStateManager.endGame).toHaveBeenCalledWith(gameId, playerId);
+      expect(mockGameStateManager.endGame).toHaveBeenCalledWith(
+        gameId,
+        playerId,
+      );
       expect(mockNotificationService.sendGameUpdate).toHaveBeenCalledWith(
         'player2@test.com',
         gameId,
-        'Игра окончена! Победитель: player1'
+        'Игра окончена! Победитель: player1',
       );
     });
   });
@@ -283,7 +346,9 @@ describe('GameService', () => {
       const result = await service.getGamesByPlayer(playerId);
 
       expect(result).toEqual(mockGames);
-      expect(mockGameStateManager.getGamesByPlayer).toHaveBeenCalledWith(playerId);
+      expect(mockGameStateManager.getGamesByPlayer).toHaveBeenCalledWith(
+        playerId,
+      );
     });
   });
 

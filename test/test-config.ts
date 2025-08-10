@@ -7,7 +7,8 @@ export const TestConfigModule = ConfigModule.forRoot({
     () => ({
       JWT_SECRET: 'GLADIUS',
       PORT: 7001,
-      MONGO_URI: 'mongodb://localhost:27017/sea-battle-test',
+      MONGO_URI:
+        'mongodb://admin:password@localhost:27017/sea-battle-test?authSource=admin',
       NODE_ENV: 'test',
     }),
   ],

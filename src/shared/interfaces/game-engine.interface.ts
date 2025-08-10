@@ -3,7 +3,11 @@ import { Board } from '../models/board.model';
 
 export interface IGameEngine {
   validateShipPlacement(board: Board, ships: ShipPosition[]): boolean;
-  processAttack(board: Board, x: number, y: number): { hit: boolean; sunk: boolean; shipId?: string };
+  processAttack(
+    board: Board,
+    x: number,
+    y: number,
+  ): { hit: boolean; sunk: boolean; shipId?: string };
   checkWinCondition(board: Board): boolean;
   generateEmptyBoard(): Board;
   placeShipsOnBoard(board: Board, ships: ShipPosition[]): Board;

@@ -21,5 +21,3 @@ export const MESSAGES = {
 } as const;
 
 export type Messages = typeof MESSAGES;
-
-

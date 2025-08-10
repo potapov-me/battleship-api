@@ -7,17 +7,22 @@ import { LoggingInterceptor } from './shared/interceptors/logging.interceptor';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const logger = new Logger('Bootstrap');
-  
+
   // CORS configuration
   app.enableCors({
-    origin: process.env.NODE_ENV === 'production' 
-      ? [process.env.DOMAIN] 
-      : ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:7001'],
+    origin:
+      process.env.NODE_ENV === 'production'
+        ? [process.env.DOMAIN]
+        : [
+            'http://localhost:3000',
+            'http://localhost:3001',
+            'http://localhost:7001',
+          ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   });
-  
+
   // Global validation pipe
   app.useGlobalPipes(
     new ValidationPipe({

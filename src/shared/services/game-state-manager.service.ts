@@ -1,5 +1,14 @@
-import { Injectable, Logger, NotFoundException, BadRequestException, Inject } from '@nestjs/common';
-import { IGameStateManager, type IGameEngine } from '../interfaces/game-engine.interface';
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  BadRequestException,
+  Inject,
+} from '@nestjs/common';
+import {
+  IGameStateManager,
+  type IGameEngine,
+} from '../interfaces/game-engine.interface';
 import { RedisService } from '../redis.service';
 import { Game, GameStatus } from '../models/game.model';
 import { GAME_CONSTANTS } from '../constants/game.constants';
@@ -17,7 +26,7 @@ export class GameStateManagerService implements IGameStateManager {
   async createGame(player1Id: string, player2Id: string): Promise<string> {
     const gameId = this.generateGameId();
     const game = new Game();
-    
+
     game.id = gameId;
     game.player1 = { id: player1Id } as any;
     game.player2 = { id: player2Id } as any;
@@ -30,8 +39,10 @@ export class GameStateManagerService implements IGameStateManager {
     game.createdAt = new Date();
 
     await this.redisService.set(`game:${gameId}`, game, this.GAME_TTL);
-    
-    this.logger.log(`Created game ${gameId} with players ${player1Id} and ${player2Id}`);
+
+    this.logger.log(
+      `Created game ${gameId} with players ${player1Id} and ${player2Id}`,
+    );
     return gameId;
   }
 
@@ -66,7 +77,7 @@ export class GameStateManagerService implements IGameStateManager {
     game.startedAt = new Date();
 
     await this.updateGameState(gameId, game);
-    
+
     this.logger.log(`Started game ${gameId}`);
     return true;
   }
@@ -84,7 +95,7 @@ export class GameStateManagerService implements IGameStateManager {
     }
 
     await this.updateGameState(gameId, game);
-    
+
     this.logger.log(`Ended game ${gameId} with winner ${winnerId || 'none'}`);
     return true;
   }
@@ -110,9 +121,11 @@ export class GameStateManagerService implements IGameStateManager {
 
       for (const key of gameKeys) {
         const game = await this.redisService.get<Game>(key);
-        if (game && 
-            ((game.player1 && game.player1.id === playerId) || 
-             (game.player2 && game.player2.id === playerId))) {
+        if (
+          game &&
+          ((game.player1 && game.player1.id === playerId) ||
+            (game.player2 && game.player2.id === playerId))
+        ) {
           games.push(game);
         }
       }

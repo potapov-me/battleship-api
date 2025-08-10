@@ -5,7 +5,11 @@ import { UsersService } from '../users/users.service';
 import { AuthGuard } from '@nestjs/passport';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
-import { BadRequestException, UnauthorizedException, ConflictException } from '@nestjs/common';
+import {
+  BadRequestException,
+  UnauthorizedException,
+  ConflictException,
+} from '@nestjs/common';
 import { MESSAGES } from 'src/shared/constants/messages';
 
 describe('AuthController', () => {
@@ -142,9 +146,13 @@ describe('AuthController', () => {
       };
 
       const errorMessage = 'Пользователь с таким email уже существует';
-      mockAuthService.register.mockRejectedValue(new ConflictException(errorMessage));
+      mockAuthService.register.mockRejectedValue(
+        new ConflictException(errorMessage),
+      );
 
-      await expect(controller.register(registerDto)).rejects.toThrow(ConflictException);
+      await expect(controller.register(registerDto)).rejects.toThrow(
+        ConflictException,
+      );
       expect(mockAuthService.register).toHaveBeenCalledWith(
         registerDto.username,
         registerDto.email,
@@ -160,9 +168,13 @@ describe('AuthController', () => {
       };
 
       const errorMessage = 'Пользователь с таким username уже существует';
-      mockAuthService.register.mockRejectedValue(new ConflictException(errorMessage));
+      mockAuthService.register.mockRejectedValue(
+        new ConflictException(errorMessage),
+      );
 
-      await expect(controller.register(registerDto)).rejects.toThrow(ConflictException);
+      await expect(controller.register(registerDto)).rejects.toThrow(
+        ConflictException,
+      );
       expect(mockAuthService.register).toHaveBeenCalledWith(
         registerDto.username,
         registerDto.email,

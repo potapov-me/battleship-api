@@ -9,7 +9,8 @@ export class CreateRoomDto {
   userId: string;
 
   @ApiPropertyOptional({
-    description: 'Название комнаты (если не указано, будет создано автоматически)',
+    description:
+      'Название комнаты (если не указано, будет создано автоматически)',
     example: 'Комната для игры',
   })
   name?: string;
@@ -81,4 +82,3 @@ export class ActiveRoomsResponseDto {
   })
   rooms: RoomResponseDto[];
 }
-

@@ -1,9 +1,21 @@
-import { Injectable, NotFoundException, BadRequestException, Logger, Inject } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  Logger,
+  Inject,
+} from '@nestjs/common';
 import { Board } from 'src/shared/models/board.model';
 import { Game, GameStatus } from 'src/shared/models/game.model';
 import { ShipPosition } from '../shared/models/ship.model';
-import type { IGameEngine, IGameStateManager } from '../shared/interfaces/game-engine.interface';
-import type { IAuditService, INotificationService } from '../shared/interfaces/notification.interface';
+import type {
+  IGameEngine,
+  IGameStateManager,
+} from '../shared/interfaces/game-engine.interface';
+import type {
+  IAuditService,
+  INotificationService,
+} from '../shared/interfaces/notification.interface';
 import { ShotResult, ShipPlacementResult } from '../shared/types/game.types';
 
 @Injectable()
@@ -12,22 +24,30 @@ export class GameService {
 
   constructor(
     @Inject('IGameEngine') private readonly gameEngine: IGameEngine,
-    @Inject('IGameStateManager') private readonly gameStateManager: IGameStateManager,
+    @Inject('IGameStateManager')
+    private readonly gameStateManager: IGameStateManager,
     @Inject('IAuditService') private readonly auditService: IAuditService,
-    @Inject('INotificationService') private readonly notificationService: INotificationService,
+    @Inject('INotificationService')
+    private readonly notificationService: INotificationService,
   ) {}
 
   async createGame(player1Id: string, player2Id: string): Promise<Game> {
     const gameId = await this.gameStateManager.createGame(player1Id, player2Id);
     const game = await this.gameStateManager.getGameState(gameId);
-    
-    await this.auditService.logGameAction(gameId, player1Id, 'game_created', { player2Id });
-    
+
+    await this.auditService.logGameAction(gameId, player1Id, 'game_created', {
+      player2Id,
+    });
+
     this.logger.log(`Created new game: ${gameId}`);
     return game;
   }
 
-  async placeShips(gameId: string, playerId: string, ships: ShipPosition[]): Promise<ShipPlacementResult> {
+  async placeShips(
+    gameId: string,
+    playerId: string,
+    ships: ShipPosition[],
+  ): Promise<ShipPlacementResult> {
     const game = await this.gameStateManager.getGameState(gameId);
     if (!game) {
       throw new NotFoundException('Game not found');
@@ -58,8 +78,11 @@ export class GameService {
 
     try {
       // Размещаем корабли
-      const updatedBoard = this.gameEngine.placeShipsOnBoard(targetBoard, ships);
-      
+      const updatedBoard = this.gameEngine.placeShipsOnBoard(
+        targetBoard,
+        ships,
+      );
+
       if (isPlayer1) {
         game.board1 = updatedBoard;
       } else {
@@ -67,21 +90,34 @@ export class GameService {
       }
 
       // Проверяем, готовы ли оба игрока
-      if (this.areShipsPlaced(game.board1) && this.areShipsPlaced(game.board2)) {
+      if (
+        this.areShipsPlaced(game.board1) &&
+        this.areShipsPlaced(game.board2)
+      ) {
         await this.gameStateManager.startGame(gameId);
       }
 
       await this.gameStateManager.updateGameState(gameId, game);
-      await this.auditService.logGameAction(gameId, playerId, 'ships_placed', { shipCount: ships.length });
+      await this.auditService.logGameAction(gameId, playerId, 'ships_placed', {
+        shipCount: ships.length,
+      });
 
       return { success: true };
     } catch (error) {
-      this.logger.error(`Failed to place ships for game ${gameId}, player ${playerId}:`, error);
+      this.logger.error(
+        `Failed to place ships for game ${gameId}, player ${playerId}:`,
+        error,
+      );
       throw new BadRequestException('Failed to place ships');
     }
   }
 
-  async makeShot(gameId: string, playerId: string, x: number, y: number): Promise<ShotResult> {
+  async makeShot(
+    gameId: string,
+    playerId: string,
+    x: number,
+    y: number,
+  ): Promise<ShotResult> {
     const game = await this.gameStateManager.getGameState(gameId);
     if (!game) {
       throw new NotFoundException('Game not found');
@@ -107,7 +143,7 @@ export class GameService {
     try {
       // Обрабатываем атаку
       const attackResult = this.gameEngine.processAttack(targetBoard, x, y);
-      
+
       // Обновляем доску
       if (isPlayer1) {
         game.board2 = targetBoard;
@@ -117,13 +153,13 @@ export class GameService {
 
       // Проверяем условия победы
       const gameOver = this.gameEngine.checkWinCondition(targetBoard);
-      
+
       if (gameOver) {
         await this.gameStateManager.endGame(gameId, playerId);
         await this.notificationService.sendGameUpdate(
           isPlayer1 ? game.player2.email : game.player1.email,
           gameId,
-          `Игра окончена! Победитель: ${isPlayer1 ? game.player1.username : game.player2.username}`
+          `Игра окончена! Победитель: ${isPlayer1 ? game.player1.username : game.player2.username}`,
         );
       } else {
         // Передаем ход другому игроку
@@ -131,17 +167,23 @@ export class GameService {
       }
 
       await this.gameStateManager.updateGameState(gameId, game);
-      await this.auditService.logGameAction(gameId, playerId, 'shot_made', { 
-        x, y, hit: attackResult.hit, sunk: attackResult.sunk 
+      await this.auditService.logGameAction(gameId, playerId, 'shot_made', {
+        x,
+        y,
+        hit: attackResult.hit,
+        sunk: attackResult.sunk,
       });
 
       return {
         hit: attackResult.hit,
         sunk: attackResult.sunk,
-        gameOver
+        gameOver,
       };
     } catch (error) {
-      this.logger.error(`Failed to process shot for game ${gameId}, player ${playerId}:`, error);
+      this.logger.error(
+        `Failed to process shot for game ${gameId}, player ${playerId}:`,
+        error,
+      );
       throw new BadRequestException('Failed to process shot');
     }
   }

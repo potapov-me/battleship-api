@@ -85,16 +85,18 @@ export class RedisService {
     try {
       const hash = await this.redis.hgetall(key);
       const result: Record<string, T> = {};
-      
+
       for (const [field, value] of Object.entries(hash)) {
         try {
           result[field] = JSON.parse(value) as T;
         } catch (parseError) {
           // Skip invalid JSON
-          this.logger.warn(`Invalid JSON for field ${field} in key ${key}: ${parseError}`);
+          this.logger.warn(
+            `Invalid JSON for field ${field} in key ${key}: ${parseError}`,
+          );
         }
       }
-      
+
       return result;
     } catch (error) {
       this.logger.error(`Failed to hgetall key ${key}:`, error);

@@ -1,4 +1,9 @@
-import { CanActivate, ExecutionContext, Injectable, BadRequestException } from '@nestjs/common';
+import {
+  CanActivate,
+  ExecutionContext,
+  Injectable,
+  BadRequestException,
+} from '@nestjs/common';
 import { MESSAGES } from 'src/shared/constants/messages';
 import isEmail from 'validator/lib/isEmail';
 
@@ -21,7 +26,8 @@ export class EmailFormatGuard implements CanActivate {
     });
 
     // Дополнительная проверка на двойные точки и допустимые символы
-    const strictRegex = /^(?!.*\.\.)[A-Za-z0-9](?:[A-Za-z0-9._%+-]*[A-Za-z0-9])?@[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?)+$/;
+    const strictRegex =
+      /^(?!.*\.\.)[A-Za-z0-9](?:[A-Za-z0-9._%+-]*[A-Za-z0-9])?@[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?)+$/;
 
     if (!isValid || !strictRegex.test(email)) {
       throw new BadRequestException(MESSAGES.errors.invalidEmail);
@@ -30,5 +36,3 @@ export class EmailFormatGuard implements CanActivate {
     return true;
   }
 }
-
-

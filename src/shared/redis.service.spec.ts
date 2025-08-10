@@ -1,10 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { RedisService } from './redis.service';
 import Redis from 'ioredis';
+import { Logger } from '@nestjs/common';
 
 describe('RedisService', () => {
   let service: RedisService;
   let mockRedis: jest.Mocked<Redis>;
+  let mockLogger: jest.Mocked<Logger>;
 
   beforeEach(async () => {
     mockRedis = {
@@ -21,6 +23,19 @@ describe('RedisService', () => {
       expire: jest.fn(),
     } as any;
 
+    // Мокаем Logger для каждого теста
+    mockLogger = {
+      error: jest.fn(),
+      warn: jest.fn(),
+      log: jest.fn(),
+      debug: jest.fn(),
+      verbose: jest.fn(),
+    } as any;
+
+    jest.spyOn(Logger.prototype, 'error').mockImplementation(mockLogger.error);
+    jest.spyOn(Logger.prototype, 'warn').mockImplementation(mockLogger.warn);
+    jest.spyOn(Logger.prototype, 'log').mockImplementation(mockLogger.log);
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         RedisService,
@@ -36,6 +51,7 @@ describe('RedisService', () => {
 
   afterEach(() => {
     jest.clearAllMocks();
+    jest.restoreAllMocks();
   });
 
   it('should be defined', () => {
@@ -64,7 +80,11 @@ describe('RedisService', () => {
 
       await service.set(key, value, ttl);
 
-      expect(mockRedis.setex).toHaveBeenCalledWith(key, ttl, JSON.stringify(value));
+      expect(mockRedis.setex).toHaveBeenCalledWith(
+        key,
+        ttl,
+        JSON.stringify(value),
+      );
       expect(mockRedis.set).not.toHaveBeenCalled();
     });
 
@@ -75,7 +95,9 @@ describe('RedisService', () => {
 
       mockRedis.set.mockRejectedValue(error);
 
-      await expect(service.set(key, value)).rejects.toThrow('Redis connection failed');
+      await expect(service.set(key, value)).rejects.toThrow(
+        'Redis connection failed',
+      );
     });
   });
 
@@ -214,7 +236,11 @@ describe('RedisService', () => {
 
       await service.hset(key, field, value);
 
-      expect(mockRedis.hset).toHaveBeenCalledWith(key, field, JSON.stringify(value));
+      expect(mockRedis.hset).toHaveBeenCalledWith(
+        key,
+        field,
+        JSON.stringify(value),
+      );
     });
 
     it('should handle Redis errors', async () => {
@@ -225,7 +251,9 @@ describe('RedisService', () => {
 
       mockRedis.hset.mockRejectedValue(error);
 
-      await expect(service.hset(key, field, value)).rejects.toThrow('Redis connection failed');
+      await expect(service.hset(key, field, value)).rejects.toThrow(
+        'Redis connection failed',
+      );
     });
   });
 
@@ -344,7 +372,9 @@ describe('RedisService', () => {
 
       mockRedis.hdel.mockRejectedValue(error);
 
-      await expect(service.hdel(key, field)).rejects.toThrow('Redis connection failed');
+      await expect(service.hdel(key, field)).rejects.toThrow(
+        'Redis connection failed',
+      );
     });
   });
 
@@ -367,7 +397,9 @@ describe('RedisService', () => {
 
       mockRedis.expire.mockRejectedValue(error);
 
-      await expect(service.expire(key, seconds)).rejects.toThrow('Redis connection failed');
+      await expect(service.expire(key, seconds)).rejects.toThrow(
+        'Redis connection failed',
+      );
     });
   });
 });

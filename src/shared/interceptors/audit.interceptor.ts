@@ -9,7 +9,10 @@ import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { Reflector } from '@nestjs/core';
 import type { IAuditService } from '../interfaces/notification.interface';
-import { AUDIT_ACTION_KEY, AUDIT_DETAILS_KEY } from '../decorators/audit.decorator';
+import {
+  AUDIT_ACTION_KEY,
+  AUDIT_DETAILS_KEY,
+} from '../decorators/audit.decorator';
 
 @Injectable()
 export class AuditInterceptor implements NestInterceptor {
@@ -20,8 +23,14 @@ export class AuditInterceptor implements NestInterceptor {
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const request = context.switchToHttp().getRequest();
-    const action = this.reflector.get<string>(AUDIT_ACTION_KEY, context.getHandler());
-    const detailsFn = this.reflector.get<Function>(AUDIT_DETAILS_KEY, context.getHandler());
+    const action = this.reflector.get<string>(
+      AUDIT_ACTION_KEY,
+      context.getHandler(),
+    );
+    const detailsFn = this.reflector.get<Function>(
+      AUDIT_DETAILS_KEY,
+      context.getHandler(),
+    );
 
     if (!action) {
       return next.handle();
@@ -34,17 +43,17 @@ export class AuditInterceptor implements NestInterceptor {
       tap(async (result) => {
         try {
           const details = detailsFn ? detailsFn(args) : { result };
-          
+
           if (user?.id) {
             await this.auditService.logUserAction(user.id, action, details);
           }
-          
+
           if (request.params?.gameId) {
             await this.auditService.logGameAction(
               request.params.gameId,
               user?.id || 'anonymous',
               action,
-              details
+              details,
             );
           }
         } catch (error) {

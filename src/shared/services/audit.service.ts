@@ -20,7 +20,11 @@ export class AuditService implements IAuditService {
 
   constructor(private readonly redisService: RedisService) {}
 
-  async logUserAction(userId: string, action: string, details?: any): Promise<void> {
+  async logUserAction(
+    userId: string,
+    action: string,
+    details?: any,
+  ): Promise<void> {
     const entry: AuditLogEntry = {
       id: this.generateAuditId(),
       timestamp: new Date(),
@@ -33,7 +37,12 @@ export class AuditService implements IAuditService {
     this.logger.log(`User action logged: ${action} by user ${userId}`);
   }
 
-  async logGameAction(gameId: string, playerId: string, action: string, details?: any): Promise<void> {
+  async logGameAction(
+    gameId: string,
+    playerId: string,
+    action: string,
+    details?: any,
+  ): Promise<void> {
     const entry: AuditLogEntry = {
       id: this.generateAuditId(),
       timestamp: new Date(),
@@ -44,27 +53,34 @@ export class AuditService implements IAuditService {
     };
 
     await this.saveAuditEntry(entry);
-    this.logger.log(`Game action logged: ${action} by player ${playerId} in game ${gameId}`);
+    this.logger.log(
+      `Game action logged: ${action} by player ${playerId} in game ${gameId}`,
+    );
   }
 
   async getAuditLog(
-    userId?: string, 
-    gameId?: string, 
-    startDate?: Date, 
-    endDate?: Date
+    userId?: string,
+    gameId?: string,
+    startDate?: Date,
+    endDate?: Date,
   ): Promise<AuditLogEntry[]> {
     const auditKeys = await this.redisService.keys('audit:*');
     const entries: AuditLogEntry[] = [];
 
     for (const key of auditKeys) {
       const entry = await this.redisService.get<AuditLogEntry>(key);
-      if (entry && this.matchesFilter(entry, userId, gameId, startDate, endDate)) {
+      if (
+        entry &&
+        this.matchesFilter(entry, userId, gameId, startDate, endDate)
+      ) {
         entries.push(entry);
       }
     }
 
     // Сортируем по времени (новые сначала)
-    return entries.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+    return entries.sort(
+      (a, b) => b.timestamp.getTime() - a.timestamp.getTime(),
+    );
   }
 
   private async saveAuditEntry(entry: AuditLogEntry): Promise<void> {
@@ -77,7 +93,7 @@ export class AuditService implements IAuditService {
     userId?: string,
     gameId?: string,
     startDate?: Date,
-    endDate?: Date
+    endDate?: Date,
   ): boolean {
     if (userId && entry.userId !== userId) {
       return false;

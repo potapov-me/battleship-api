@@ -3,11 +3,48 @@ import { getModelToken } from '@nestjs/mongoose';
 import { PlayersController } from './players.controller';
 import { PlayersService } from './players.service';
 import { User } from '../users/schemas/user.schema';
-import { CreatePlayerDto, UpdatePlayerDto, PlayerResponseDto, PlayerStatsDto, PlayerListResponseDto } from './dto/player.dto';
+import {
+  CreatePlayerDto,
+  UpdatePlayerDto,
+  PlayerResponseDto,
+  PlayerStatsDto,
+  PlayerListResponseDto,
+} from './dto/player.dto';
 
 describe('PlayersController', () => {
   let controller: PlayersController;
   let service: PlayersService;
+
+  const createMockPlayerResponse = (overrides: Partial<PlayerResponseDto> = {}): PlayerResponseDto => ({
+    id: '1',
+    username: 'testuser',
+    email: 'test@example.com',
+    roles: ['player'],
+    isEmailConfirmed: true,
+    isActive: true,
+    rating: 1000,
+    totalGames: 0,
+    wins: 0,
+    losses: 0,
+    winRate: 0,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    ...overrides,
+  });
+
+  const createMockPlayerStats = (overrides: Partial<PlayerStatsDto> = {}): PlayerStatsDto => ({
+    id: '1',
+    username: 'testuser',
+    totalGames: 0,
+    wins: 0,
+    losses: 0,
+    winRate: 0,
+    rating: 1000,
+    averageOpponentRating: 1000,
+    bestRating: 1000,
+    gamesLast30Days: 0,
+    ...overrides,
+  });
 
   const mockUserModel = {
     find: jest.fn(),
@@ -68,15 +105,7 @@ describe('PlayersController', () => {
         roles: ['player'],
       };
 
-      const expectedResponse: PlayerResponseDto = {
-        id: '1',
-        username: 'testuser',
-        email: 'test@example.com',
-        roles: ['player'],
-        isEmailConfirmed: false,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
+      const expectedResponse = createMockPlayerResponse({ isEmailConfirmed: false });
 
       mockPlayersService.createPlayer.mockResolvedValue(expectedResponse);
 
@@ -91,26 +120,21 @@ describe('PlayersController', () => {
     it('should return list of players with pagination', async () => {
       const expectedResponse: PlayerListResponseDto = {
         players: [
-          {
-            id: '1',
-            username: 'user1',
-            email: 'user1@example.com',
-            roles: ['player'],
-            isEmailConfirmed: true,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          },
+          createMockPlayerResponse({ id: '1', username: 'user1', email: 'user1@example.com' }),
         ],
         total: 1,
         page: 1,
         limit: 10,
+        totalPages: 1,
+        hasNextPage: false,
+        hasPrevPage: false,
       };
 
       mockPlayersService.findAllPlayers.mockResolvedValue(expectedResponse);
 
       const result = await controller.findAllPlayers(1, 10, 'test');
 
-      expect(service.findAllPlayers).toHaveBeenCalledWith(1, 10, 'test');
+      expect(service.findAllPlayers).toHaveBeenCalledWith(1, 10, { search: 'test' });
       expect(result).toEqual(expectedResponse);
     });
   });
@@ -118,15 +142,7 @@ describe('PlayersController', () => {
   describe('findPlayerById', () => {
     it('should return player by id', async () => {
       const playerId = '1';
-      const expectedResponse: PlayerResponseDto = {
-        id: '1',
-        username: 'testuser',
-        email: 'test@example.com',
-        roles: ['player'],
-        isEmailConfirmed: true,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
+      const expectedResponse = createMockPlayerResponse();
 
       mockPlayersService.findPlayerById.mockResolvedValue(expectedResponse);
 
@@ -140,17 +156,11 @@ describe('PlayersController', () => {
   describe('findPlayerByUsername', () => {
     it('should return player by username', async () => {
       const username = 'testuser';
-      const expectedResponse: PlayerResponseDto = {
-        id: '1',
-        username: 'testuser',
-        email: 'test@example.com',
-        roles: ['player'],
-        isEmailConfirmed: true,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
+      const expectedResponse = createMockPlayerResponse();
 
-      mockPlayersService.findPlayerByUsername.mockResolvedValue(expectedResponse);
+      mockPlayersService.findPlayerByUsername.mockResolvedValue(
+        expectedResponse,
+      );
 
       const result = await controller.findPlayerByUsername(username);
 
@@ -162,15 +172,7 @@ describe('PlayersController', () => {
   describe('findPlayerByEmail', () => {
     it('should return player by email', async () => {
       const email = 'test@example.com';
-      const expectedResponse: PlayerResponseDto = {
-        id: '1',
-        username: 'testuser',
-        email: 'test@example.com',
-        roles: ['player'],
-        isEmailConfirmed: true,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
+      const expectedResponse = createMockPlayerResponse();
 
       mockPlayersService.findPlayerByEmail.mockResolvedValue(expectedResponse);
 
@@ -189,21 +191,16 @@ describe('PlayersController', () => {
         email: 'updated@example.com',
       };
 
-      const expectedResponse: PlayerResponseDto = {
-        id: '1',
-        username: 'updateduser',
-        email: 'updated@example.com',
-        roles: ['player'],
-        isEmailConfirmed: true,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
+      const expectedResponse = createMockPlayerResponse({ username: 'updateduser', email: 'updated@example.com' });
 
       mockPlayersService.updatePlayer.mockResolvedValue(expectedResponse);
 
       const result = await controller.updatePlayer(playerId, updatePlayerDto);
 
-      expect(service.updatePlayer).toHaveBeenCalledWith(playerId, updatePlayerDto);
+      expect(service.updatePlayer).toHaveBeenCalledWith(
+        playerId,
+        updatePlayerDto,
+      );
       expect(result).toEqual(expectedResponse);
     });
   });
@@ -223,15 +220,7 @@ describe('PlayersController', () => {
   describe('getPlayerStats', () => {
     it('should return player stats', async () => {
       const playerId = '1';
-      const expectedResponse: PlayerStatsDto = {
-        id: '1',
-        username: 'testuser',
-        totalGames: 10,
-        wins: 7,
-        losses: 3,
-        winRate: 70,
-        rating: 1200,
-      };
+      const expectedResponse = createMockPlayerStats({ totalGames: 10, wins: 7, losses: 3, winRate: 70, rating: 1200 });
 
       mockPlayersService.getPlayerStats.mockResolvedValue(expectedResponse);
 
@@ -261,11 +250,15 @@ describe('PlayersController', () => {
       const email = 'test@example.com';
       const expectedResponse = { message: 'Токен подтверждения сгенерирован' };
 
-      mockPlayersService.generateEmailConfirmationToken.mockResolvedValue('new-token');
+      mockPlayersService.generateEmailConfirmationToken.mockResolvedValue(
+        'new-token',
+      );
 
       const result = await controller.resendConfirmation(email);
 
-      expect(service.generateEmailConfirmationToken).toHaveBeenCalledWith(email);
+      expect(service.generateEmailConfirmationToken).toHaveBeenCalledWith(
+        email,
+      );
       expect(result).toEqual(expectedResponse);
     });
   });
@@ -276,15 +269,7 @@ describe('PlayersController', () => {
         user: { id: '1' },
       };
 
-      const expectedResponse: PlayerResponseDto = {
-        id: '1',
-        username: 'testuser',
-        email: 'test@example.com',
-        roles: ['player'],
-        isEmailConfirmed: true,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
+      const expectedResponse = createMockPlayerResponse();
 
       mockPlayersService.findPlayerById.mockResolvedValue(expectedResponse);
 
@@ -305,19 +290,14 @@ describe('PlayersController', () => {
         username: 'updateduser',
       };
 
-      const expectedResponse: PlayerResponseDto = {
-        id: '1',
-        username: 'updateduser',
-        email: 'test@example.com',
-        roles: ['player'],
-        isEmailConfirmed: true,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
+      const expectedResponse = createMockPlayerResponse({ username: 'updateduser' });
 
       mockPlayersService.updatePlayer.mockResolvedValue(expectedResponse);
 
-      const result = await controller.updateMyProfile(mockRequest, updatePlayerDto);
+      const result = await controller.updateMyProfile(
+        mockRequest,
+        updatePlayerDto,
+      );
 
       expect(service.updatePlayer).toHaveBeenCalledWith('1', updatePlayerDto);
       expect(result).toEqual(expectedResponse);

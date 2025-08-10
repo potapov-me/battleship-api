@@ -46,8 +46,8 @@ describe('MailService', () => {
       // Mock config values
       mockConfigService.get.mockImplementation((key: string) => {
         const config = {
-          'NODE_ENV': 'test',
-          'DOMAIN': 'http://localhost:3000',
+          NODE_ENV: 'test',
+          DOMAIN: 'http://localhost:3000',
         };
         return config[key];
       });
@@ -69,8 +69,8 @@ describe('MailService', () => {
 
       mockConfigService.get.mockImplementation((key: string) => {
         const config = {
-          'NODE_ENV': 'test',
-          'DOMAIN': 'http://localhost:3000',
+          NODE_ENV: 'test',
+          DOMAIN: 'http://localhost:3000',
         };
         return config[key];
       });
@@ -79,10 +79,16 @@ describe('MailService', () => {
 
       const lastMail = service.getLastMail();
       expect(lastMail).toBeDefined();
-      expect(lastMail?.confirmationLink).toBe('http://localhost:3000/confirm?token=123');
+      expect(lastMail?.confirmationLink).toBe(
+        'http://localhost:3000/confirm?token=123',
+      );
       expect(lastMail?.subject).toBe('Подтверждение email');
-      expect(lastMail?.text).toContain('http://localhost:3000/confirm?token=123');
-      expect(lastMail?.html).toContain('http://localhost:3000/confirm?token=123');
+      expect(lastMail?.text).toContain(
+        'http://localhost:3000/confirm?token=123',
+      );
+      expect(lastMail?.html).toContain(
+        'http://localhost:3000/confirm?token=123',
+      );
     });
 
     it('should handle absolute confirmation link', async () => {
@@ -96,8 +102,8 @@ describe('MailService', () => {
 
       mockConfigService.get.mockImplementation((key: string) => {
         const config = {
-          'NODE_ENV': 'test',
-          'DOMAIN': 'http://localhost:3000',
+          NODE_ENV: 'test',
+          DOMAIN: 'http://localhost:3000',
         };
         return config[key];
       });
@@ -106,7 +112,9 @@ describe('MailService', () => {
 
       const lastMail = service.getLastMail();
       expect(lastMail).toBeDefined();
-      expect(lastMail?.confirmationLink).toBe('https://example.com/confirm?token=123');
+      expect(lastMail?.confirmationLink).toBe(
+        'https://example.com/confirm?token=123',
+      );
     });
 
     it('should handle domain with trailing slash', async () => {
@@ -120,8 +128,8 @@ describe('MailService', () => {
 
       mockConfigService.get.mockImplementation((key: string) => {
         const config = {
-          'NODE_ENV': 'test',
-          'DOMAIN': 'http://localhost:3000/',
+          NODE_ENV: 'test',
+          DOMAIN: 'http://localhost:3000/',
         };
         return config[key];
       });
@@ -130,7 +138,9 @@ describe('MailService', () => {
 
       const lastMail = service.getLastMail();
       expect(lastMail).toBeDefined();
-      expect(lastMail?.confirmationLink).toBe('http://localhost:3000/confirm?token=123');
+      expect(lastMail?.confirmationLink).toBe(
+        'http://localhost:3000/confirm?token=123',
+      );
     });
   });
 

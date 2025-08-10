@@ -62,8 +62,18 @@ describe('GameEngineService', () => {
     it('should return false for invalid ship count', () => {
       const board = service.generateEmptyBoard();
       const ships = [
-        { x: 0, y: 0, type: ShipType.CARRIER, direction: ShipDirection.HORIZONTAL },
-        { x: 1, y: 0, type: ShipType.CARRIER, direction: ShipDirection.HORIZONTAL }, // Duplicate carrier
+        {
+          x: 0,
+          y: 0,
+          type: ShipType.CARRIER,
+          direction: ShipDirection.HORIZONTAL,
+        },
+        {
+          x: 1,
+          y: 0,
+          type: ShipType.CARRIER,
+          direction: ShipDirection.HORIZONTAL,
+        }, // Duplicate carrier
       ];
 
       const result = service.validateShipPlacement(board, ships);
@@ -74,10 +84,30 @@ describe('GameEngineService', () => {
     it('should return false for ships outside boundaries', () => {
       const board = service.generateEmptyBoard();
       const ships = [
-        { x: -1, y: 0, type: ShipType.CARRIER, direction: ShipDirection.HORIZONTAL },
-        { x: 10, y: 5, type: ShipType.BATTLESHIP, direction: ShipDirection.VERTICAL },
-        { x: 5, y: -1, type: ShipType.CRUISER, direction: ShipDirection.HORIZONTAL },
-        { x: 5, y: 10, type: ShipType.SUBMARINE, direction: ShipDirection.VERTICAL },
+        {
+          x: -1,
+          y: 0,
+          type: ShipType.CARRIER,
+          direction: ShipDirection.HORIZONTAL,
+        },
+        {
+          x: 10,
+          y: 5,
+          type: ShipType.BATTLESHIP,
+          direction: ShipDirection.VERTICAL,
+        },
+        {
+          x: 5,
+          y: -1,
+          type: ShipType.CRUISER,
+          direction: ShipDirection.HORIZONTAL,
+        },
+        {
+          x: 5,
+          y: 10,
+          type: ShipType.SUBMARINE,
+          direction: ShipDirection.VERTICAL,
+        },
       ];
 
       const result = service.validateShipPlacement(board, ships);
@@ -88,8 +118,18 @@ describe('GameEngineService', () => {
     it('should return false for ships extending beyond boundaries', () => {
       const board = service.generateEmptyBoard();
       const ships = [
-        { x: 8, y: 0, type: ShipType.CARRIER, direction: ShipDirection.HORIZONTAL }, // Carrier extends beyond x=10
-        { x: 0, y: 8, type: ShipType.BATTLESHIP, direction: ShipDirection.VERTICAL }, // Battleship extends beyond y=10
+        {
+          x: 8,
+          y: 0,
+          type: ShipType.CARRIER,
+          direction: ShipDirection.HORIZONTAL,
+        }, // Carrier extends beyond x=10
+        {
+          x: 0,
+          y: 8,
+          type: ShipType.BATTLESHIP,
+          direction: ShipDirection.VERTICAL,
+        }, // Battleship extends beyond y=10
       ];
 
       const result = service.validateShipPlacement(board, ships);
@@ -100,8 +140,18 @@ describe('GameEngineService', () => {
     it('should return false for overlapping ships', () => {
       const board = service.generateEmptyBoard();
       const ships = [
-        { x: 0, y: 0, type: ShipType.CARRIER, direction: ShipDirection.HORIZONTAL },
-        { x: 2, y: 0, type: ShipType.BATTLESHIP, direction: ShipDirection.HORIZONTAL }, // Overlaps with carrier
+        {
+          x: 0,
+          y: 0,
+          type: ShipType.CARRIER,
+          direction: ShipDirection.HORIZONTAL,
+        },
+        {
+          x: 2,
+          y: 0,
+          type: ShipType.BATTLESHIP,
+          direction: ShipDirection.HORIZONTAL,
+        }, // Overlaps with carrier
       ];
 
       const result = service.validateShipPlacement(board, ships);
@@ -112,11 +162,36 @@ describe('GameEngineService', () => {
     it('should return true for valid ship placement', () => {
       const board = service.generateEmptyBoard();
       const ships = [
-        { x: 0, y: 0, type: ShipType.CARRIER, direction: ShipDirection.HORIZONTAL },
-        { x: 0, y: 2, type: ShipType.BATTLESHIP, direction: ShipDirection.HORIZONTAL },
-        { x: 0, y: 4, type: ShipType.CRUISER, direction: ShipDirection.HORIZONTAL },
-        { x: 0, y: 6, type: ShipType.SUBMARINE, direction: ShipDirection.HORIZONTAL },
-        { x: 0, y: 8, type: ShipType.DESTROYER, direction: ShipDirection.HORIZONTAL },
+        {
+          x: 0,
+          y: 0,
+          type: ShipType.CARRIER,
+          direction: ShipDirection.HORIZONTAL,
+        },
+        {
+          x: 0,
+          y: 2,
+          type: ShipType.BATTLESHIP,
+          direction: ShipDirection.HORIZONTAL,
+        },
+        {
+          x: 0,
+          y: 4,
+          type: ShipType.CRUISER,
+          direction: ShipDirection.HORIZONTAL,
+        },
+        {
+          x: 0,
+          y: 6,
+          type: ShipType.SUBMARINE,
+          direction: ShipDirection.HORIZONTAL,
+        },
+        {
+          x: 0,
+          y: 8,
+          type: ShipType.DESTROYER,
+          direction: ShipDirection.HORIZONTAL,
+        },
       ];
 
       const result = service.validateShipPlacement(board, ships);
@@ -129,11 +204,36 @@ describe('GameEngineService', () => {
     it('should place ships on board successfully', () => {
       const board = service.generateEmptyBoard();
       const ships = [
-        { x: 0, y: 0, type: ShipType.CARRIER, direction: ShipDirection.HORIZONTAL },
-        { x: 0, y: 2, type: ShipType.BATTLESHIP, direction: ShipDirection.HORIZONTAL },
-        { x: 0, y: 4, type: ShipType.CRUISER, direction: ShipDirection.HORIZONTAL },
-        { x: 0, y: 6, type: ShipType.SUBMARINE, direction: ShipDirection.HORIZONTAL },
-        { x: 0, y: 8, type: ShipType.DESTROYER, direction: ShipDirection.HORIZONTAL },
+        {
+          x: 0,
+          y: 0,
+          type: ShipType.CARRIER,
+          direction: ShipDirection.HORIZONTAL,
+        },
+        {
+          x: 0,
+          y: 2,
+          type: ShipType.BATTLESHIP,
+          direction: ShipDirection.HORIZONTAL,
+        },
+        {
+          x: 0,
+          y: 4,
+          type: ShipType.CRUISER,
+          direction: ShipDirection.HORIZONTAL,
+        },
+        {
+          x: 0,
+          y: 6,
+          type: ShipType.SUBMARINE,
+          direction: ShipDirection.HORIZONTAL,
+        },
+        {
+          x: 0,
+          y: 8,
+          type: ShipType.DESTROYER,
+          direction: ShipDirection.HORIZONTAL,
+        },
       ];
 
       const result = service.placeShipsOnBoard(board, ships);
@@ -141,14 +241,14 @@ describe('GameEngineService', () => {
       expect(result.ships).toHaveLength(5);
       expect(result.ships[0].type).toBe(ShipType.CARRIER);
       expect(result.ships[1].type).toBe(ShipType.BATTLESHIP);
-      
+
       // Check that cells are marked with ship types
       expect(result.grid[0][0].shipId).toBe(ShipType.CARRIER);
       expect(result.grid[1][0].shipId).toBe(ShipType.CARRIER);
       expect(result.grid[2][0].shipId).toBe(ShipType.CARRIER);
       expect(result.grid[3][0].shipId).toBe(ShipType.CARRIER);
       expect(result.grid[4][0].shipId).toBe(ShipType.CARRIER);
-      
+
       expect(result.grid[0][2].shipId).toBe(ShipType.BATTLESHIP);
       expect(result.grid[1][2].shipId).toBe(ShipType.BATTLESHIP);
       expect(result.grid[2][2].shipId).toBe(ShipType.BATTLESHIP);
@@ -158,10 +258,17 @@ describe('GameEngineService', () => {
     it('should throw error for invalid ship placement', () => {
       const board = service.generateEmptyBoard();
       const ships = [
-        { x: -1, y: 0, type: ShipType.CARRIER, direction: ShipDirection.HORIZONTAL },
+        {
+          x: -1,
+          y: 0,
+          type: ShipType.CARRIER,
+          direction: ShipDirection.HORIZONTAL,
+        },
       ];
 
-      expect(() => service.placeShipsOnBoard(board, ships)).toThrow('Invalid ship placement');
+      expect(() => service.placeShipsOnBoard(board, ships)).toThrow(
+        'Invalid ship placement',
+      );
     });
   });
 
@@ -169,11 +276,36 @@ describe('GameEngineService', () => {
     it('should process attack and hit ship', () => {
       const board = service.generateEmptyBoard();
       const ships = [
-        { x: 0, y: 0, type: ShipType.CARRIER, direction: ShipDirection.HORIZONTAL },
-        { x: 0, y: 2, type: ShipType.BATTLESHIP, direction: ShipDirection.HORIZONTAL },
-        { x: 0, y: 4, type: ShipType.CRUISER, direction: ShipDirection.HORIZONTAL },
-        { x: 0, y: 6, type: ShipType.SUBMARINE, direction: ShipDirection.HORIZONTAL },
-        { x: 0, y: 8, type: ShipType.DESTROYER, direction: ShipDirection.HORIZONTAL },
+        {
+          x: 0,
+          y: 0,
+          type: ShipType.CARRIER,
+          direction: ShipDirection.HORIZONTAL,
+        },
+        {
+          x: 0,
+          y: 2,
+          type: ShipType.BATTLESHIP,
+          direction: ShipDirection.HORIZONTAL,
+        },
+        {
+          x: 0,
+          y: 4,
+          type: ShipType.CRUISER,
+          direction: ShipDirection.HORIZONTAL,
+        },
+        {
+          x: 0,
+          y: 6,
+          type: ShipType.SUBMARINE,
+          direction: ShipDirection.HORIZONTAL,
+        },
+        {
+          x: 0,
+          y: 8,
+          type: ShipType.DESTROYER,
+          direction: ShipDirection.HORIZONTAL,
+        },
       ];
       const boardWithShips = service.placeShipsOnBoard(board, ships);
 
@@ -187,11 +319,36 @@ describe('GameEngineService', () => {
     it('should process attack and miss', () => {
       const board = service.generateEmptyBoard();
       const ships = [
-        { x: 0, y: 0, type: ShipType.CARRIER, direction: ShipDirection.HORIZONTAL },
-        { x: 0, y: 2, type: ShipType.BATTLESHIP, direction: ShipDirection.HORIZONTAL },
-        { x: 0, y: 4, type: ShipType.CRUISER, direction: ShipDirection.HORIZONTAL },
-        { x: 0, y: 6, type: ShipType.SUBMARINE, direction: ShipDirection.HORIZONTAL },
-        { x: 0, y: 8, type: ShipType.DESTROYER, direction: ShipDirection.HORIZONTAL },
+        {
+          x: 0,
+          y: 0,
+          type: ShipType.CARRIER,
+          direction: ShipDirection.HORIZONTAL,
+        },
+        {
+          x: 0,
+          y: 2,
+          type: ShipType.BATTLESHIP,
+          direction: ShipDirection.HORIZONTAL,
+        },
+        {
+          x: 0,
+          y: 4,
+          type: ShipType.CRUISER,
+          direction: ShipDirection.HORIZONTAL,
+        },
+        {
+          x: 0,
+          y: 6,
+          type: ShipType.SUBMARINE,
+          direction: ShipDirection.HORIZONTAL,
+        },
+        {
+          x: 0,
+          y: 8,
+          type: ShipType.DESTROYER,
+          direction: ShipDirection.HORIZONTAL,
+        },
       ];
       const boardWithShips = service.placeShipsOnBoard(board, ships);
 
@@ -205,27 +362,62 @@ describe('GameEngineService', () => {
     it('should throw error for invalid coordinates', () => {
       const board = service.generateEmptyBoard();
 
-      expect(() => service.processAttack(board, -1, 0)).toThrow('Invalid coordinates');
-      expect(() => service.processAttack(board, 10, 0)).toThrow('Invalid coordinates');
-      expect(() => service.processAttack(board, 0, -1)).toThrow('Invalid coordinates');
-      expect(() => service.processAttack(board, 0, 10)).toThrow('Invalid coordinates');
+      expect(() => service.processAttack(board, -1, 0)).toThrow(
+        'Invalid coordinates',
+      );
+      expect(() => service.processAttack(board, 10, 0)).toThrow(
+        'Invalid coordinates',
+      );
+      expect(() => service.processAttack(board, 0, -1)).toThrow(
+        'Invalid coordinates',
+      );
+      expect(() => service.processAttack(board, 0, 10)).toThrow(
+        'Invalid coordinates',
+      );
     });
 
     it('should throw error for already hit cell', () => {
       const board = service.generateEmptyBoard();
       board.grid[0][0].isHit = true;
 
-      expect(() => service.processAttack(board, 0, 0)).toThrow('Cell already hit');
+      expect(() => service.processAttack(board, 0, 0)).toThrow(
+        'Cell already hit',
+      );
     });
 
     it('should detect sunk ship', () => {
       const board = service.generateEmptyBoard();
       const ships = [
-        { x: 0, y: 0, type: ShipType.DESTROYER, direction: ShipDirection.HORIZONTAL },
-        { x: 0, y: 2, type: ShipType.BATTLESHIP, direction: ShipDirection.HORIZONTAL },
-        { x: 0, y: 4, type: ShipType.CRUISER, direction: ShipDirection.HORIZONTAL },
-        { x: 0, y: 6, type: ShipType.SUBMARINE, direction: ShipDirection.HORIZONTAL },
-        { x: 0, y: 8, type: ShipType.CARRIER, direction: ShipDirection.HORIZONTAL },
+        {
+          x: 0,
+          y: 0,
+          type: ShipType.DESTROYER,
+          direction: ShipDirection.HORIZONTAL,
+        },
+        {
+          x: 0,
+          y: 2,
+          type: ShipType.BATTLESHIP,
+          direction: ShipDirection.HORIZONTAL,
+        },
+        {
+          x: 0,
+          y: 4,
+          type: ShipType.CRUISER,
+          direction: ShipDirection.HORIZONTAL,
+        },
+        {
+          x: 0,
+          y: 6,
+          type: ShipType.SUBMARINE,
+          direction: ShipDirection.HORIZONTAL,
+        },
+        {
+          x: 0,
+          y: 8,
+          type: ShipType.CARRIER,
+          direction: ShipDirection.HORIZONTAL,
+        },
       ];
       const boardWithShips = service.placeShipsOnBoard(board, ships);
 
@@ -245,11 +437,36 @@ describe('GameEngineService', () => {
     it('should return true when all ships are sunk', () => {
       const board = service.generateEmptyBoard();
       const ships = [
-        { x: 0, y: 0, type: ShipType.DESTROYER, direction: ShipDirection.HORIZONTAL },
-        { x: 0, y: 2, type: ShipType.BATTLESHIP, direction: ShipDirection.HORIZONTAL },
-        { x: 0, y: 4, type: ShipType.CRUISER, direction: ShipDirection.HORIZONTAL },
-        { x: 0, y: 6, type: ShipType.SUBMARINE, direction: ShipDirection.HORIZONTAL },
-        { x: 0, y: 8, type: ShipType.CARRIER, direction: ShipDirection.HORIZONTAL },
+        {
+          x: 0,
+          y: 0,
+          type: ShipType.DESTROYER,
+          direction: ShipDirection.HORIZONTAL,
+        },
+        {
+          x: 0,
+          y: 2,
+          type: ShipType.BATTLESHIP,
+          direction: ShipDirection.HORIZONTAL,
+        },
+        {
+          x: 0,
+          y: 4,
+          type: ShipType.CRUISER,
+          direction: ShipDirection.HORIZONTAL,
+        },
+        {
+          x: 0,
+          y: 6,
+          type: ShipType.SUBMARINE,
+          direction: ShipDirection.HORIZONTAL,
+        },
+        {
+          x: 0,
+          y: 8,
+          type: ShipType.CARRIER,
+          direction: ShipDirection.HORIZONTAL,
+        },
       ];
       const boardWithShips = service.placeShipsOnBoard(board, ships);
 
@@ -265,11 +482,36 @@ describe('GameEngineService', () => {
     it('should return false when not all ships are sunk', () => {
       const board = service.generateEmptyBoard();
       const ships = [
-        { x: 0, y: 0, type: ShipType.CARRIER, direction: ShipDirection.HORIZONTAL },
-        { x: 0, y: 2, type: ShipType.BATTLESHIP, direction: ShipDirection.HORIZONTAL },
-        { x: 0, y: 4, type: ShipType.CRUISER, direction: ShipDirection.HORIZONTAL },
-        { x: 0, y: 6, type: ShipType.SUBMARINE, direction: ShipDirection.HORIZONTAL },
-        { x: 0, y: 8, type: ShipType.DESTROYER, direction: ShipDirection.HORIZONTAL },
+        {
+          x: 0,
+          y: 0,
+          type: ShipType.CARRIER,
+          direction: ShipDirection.HORIZONTAL,
+        },
+        {
+          x: 0,
+          y: 2,
+          type: ShipType.BATTLESHIP,
+          direction: ShipDirection.HORIZONTAL,
+        },
+        {
+          x: 0,
+          y: 4,
+          type: ShipType.CRUISER,
+          direction: ShipDirection.HORIZONTAL,
+        },
+        {
+          x: 0,
+          y: 6,
+          type: ShipType.SUBMARINE,
+          direction: ShipDirection.HORIZONTAL,
+        },
+        {
+          x: 0,
+          y: 8,
+          type: ShipType.DESTROYER,
+          direction: ShipDirection.HORIZONTAL,
+        },
       ];
       const boardWithShips = service.placeShipsOnBoard(board, ships);
 

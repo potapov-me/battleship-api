@@ -40,9 +40,9 @@ describe('RoomService', () => {
       status: RoomStatus.Waiting,
       createdAt: new Date(),
     };
-    
+
     jest.spyOn(redisService, 'set').mockResolvedValue();
-    
+
     const room = await service.createRoom('u1', 'Test Room');
     expect(room).toMatchObject<Partial<RoomEntity>>({
       creatorId: 'u1',
@@ -60,7 +60,7 @@ describe('RoomService', () => {
       status: RoomStatus.Waiting,
       createdAt: new Date(),
     };
-    
+
     const mockRoom2: RoomEntity = {
       id: 'room2',
       creatorId: 'u2',
@@ -69,12 +69,15 @@ describe('RoomService', () => {
       createdAt: new Date(),
       startedAt: new Date(),
     };
-    
-    jest.spyOn(redisService, 'keys').mockResolvedValue(['room:room1', 'room:room2']);
-    jest.spyOn(redisService, 'get')
+
+    jest
+      .spyOn(redisService, 'keys')
+      .mockResolvedValue(['room:room1', 'room:room2']);
+    jest
+      .spyOn(redisService, 'get')
       .mockResolvedValueOnce(mockRoom1)
       .mockResolvedValueOnce(mockRoom2);
-    
+
     const active = await service.getActiveRooms();
     expect(active.map((r) => r.id)).toEqual(['room1']);
   });
@@ -87,15 +90,15 @@ describe('RoomService', () => {
       status: RoomStatus.Waiting,
       createdAt: new Date(),
     };
-    
+
     jest.spyOn(redisService, 'get').mockResolvedValue(mockRoom);
     jest.spyOn(redisService, 'set').mockResolvedValue();
-    
+
     const afterJoin = await service.joinRoom('test-room', 'u2');
     expect(afterJoin.opponentId).toBe('u2');
-    
+
     await expect(service.joinRoom('test-room', 'u3')).rejects.toThrow();
-    
+
     mockRoom.status = RoomStatus.Active;
     await expect(service.joinRoom('test-room', 'u4')).rejects.toThrow();
   });
@@ -108,9 +111,9 @@ describe('RoomService', () => {
       status: RoomStatus.Waiting,
       createdAt: new Date(),
     };
-    
+
     jest.spyOn(redisService, 'get').mockResolvedValue(mockRoom);
-    
+
     await expect(service.joinRoom('test-room', 'u1')).rejects.toThrow();
   });
 
@@ -122,12 +125,12 @@ describe('RoomService', () => {
       status: RoomStatus.Waiting,
       createdAt: new Date(),
     };
-    
+
     jest.spyOn(redisService, 'get').mockResolvedValue(mockRoom);
     jest.spyOn(redisService, 'set').mockResolvedValue();
-    
+
     await expect(service.startGame('test-room')).rejects.toThrow();
-    
+
     mockRoom.opponentId = 'u2';
     const started = await service.startGame('test-room');
     expect(started.status).toBe(RoomStatus.Active);
@@ -144,14 +147,12 @@ describe('RoomService', () => {
       createdAt: new Date(),
       startedAt: new Date(),
     };
-    
+
     jest.spyOn(redisService, 'get').mockResolvedValue(mockRoom);
     jest.spyOn(redisService, 'set').mockResolvedValue();
-    
+
     const finished = await service.finishGame('test-room');
     expect(finished.status).toBe(RoomStatus.Finished);
     expect(finished.finishedAt).toBeInstanceOf(Date);
   });
 });
-
-

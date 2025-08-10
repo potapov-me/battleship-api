@@ -17,7 +17,7 @@ describe('UsersService', () => {
     const mockModel = jest.fn().mockImplementation(() => ({
       save: mockSave,
     }));
-    
+
     mockModel.findOne = mockFindOne;
     mockFindOne.mockReturnValue({
       exec: mockExec,
@@ -57,12 +57,12 @@ describe('UsersService', () => {
 
   describe('findOneByEmail', () => {
     it('should find user by email', async () => {
-      const mockUser = { 
-        email: 'test@example.com', 
+      const mockUser = {
+        email: 'test@example.com',
         username: 'testuser',
         password: 'hashedpassword',
         roles: ['user'],
-        id: '507f1f77bcf86cd799439011'
+        id: '507f1f77bcf86cd799439011',
       } as UserDocument;
 
       const mockExec = jest.fn().mockResolvedValue(mockUser);
@@ -95,12 +95,12 @@ describe('UsersService', () => {
 
   describe('findOneByUsername', () => {
     it('should find user by username', async () => {
-      const mockUser = { 
-        email: 'test@example.com', 
+      const mockUser = {
+        email: 'test@example.com',
         username: 'testuser',
         password: 'hashedpassword',
         roles: ['user'],
-        id: '507f1f77bcf86cd799439011'
+        id: '507f1f77bcf86cd799439011',
       } as UserDocument;
 
       const mockExec = jest.fn().mockResolvedValue(mockUser);
@@ -144,7 +144,7 @@ describe('UsersService', () => {
 
     it('should use default salt rounds when config is not set', async () => {
       mockConfigService.get.mockReturnValue(undefined);
-      
+
       const password = 'testpassword';
       const result = await service.generate_password_hash(password);
 
@@ -159,12 +159,12 @@ describe('UsersService', () => {
       const username = 'testuser';
       const email = 'test@example.com';
       const password = 'testpassword';
-      const mockUser = { 
-        username, 
-        email, 
+      const mockUser = {
+        username,
+        email,
         password: 'hashedpassword',
         roles: ['user'],
-        id: '507f1f77bcf86cd799439011'
+        id: '507f1f77bcf86cd799439011',
       } as UserDocument;
 
       const mockSave = jest.fn().mockResolvedValue(mockUser);
@@ -190,13 +190,13 @@ describe('UsersService', () => {
       const email = 'test@example.com';
       const password = 'testpassword';
       const hashedPassword = 'hashedpassword';
-      
-      const mockUser = { 
-        username, 
-        email, 
+
+      const mockUser = {
+        username,
+        email,
         password: hashedPassword,
         roles: ['user'],
-        id: '507f1f77bcf86cd799439011'
+        id: '507f1f77bcf86cd799439011',
       } as UserDocument;
 
       const mockSave = jest.fn().mockResolvedValue(mockUser);
@@ -205,7 +205,9 @@ describe('UsersService', () => {
       }));
 
       // Мокаем generate_password_hash
-      jest.spyOn(service, 'generate_password_hash').mockResolvedValue(hashedPassword);
+      jest
+        .spyOn(service, 'generate_password_hash')
+        .mockResolvedValue(hashedPassword);
 
       await service.createUser(username, email, password);
 

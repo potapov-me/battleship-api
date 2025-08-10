@@ -28,14 +28,14 @@ export class GameValidatorService {
     // Проверяем количество кораблей каждого типа
     const shipCounts = new Map<ShipType, number>();
     for (const ship of ships) {
-      const shipType = ship.type as ShipType;
+      const shipType = ship.type;
       shipCounts.set(shipType, (shipCounts.get(shipType) || 0) + 1);
     }
 
     for (const [shipType, required] of Object.entries(this.REQUIRED_SHIPS)) {
       if ((shipCounts.get(shipType as ShipType) || 0) !== required) {
         throw new BadRequestException(
-          `Invalid ship count for ${shipType}. Expected ${required}, got ${shipCounts.get(shipType as ShipType) || 0}`
+          `Invalid ship count for ${shipType}. Expected ${required}, got ${shipCounts.get(shipType as ShipType) || 0}`,
         );
       }
     }
@@ -58,7 +58,7 @@ export class GameValidatorService {
 
     if (x < 0 || x >= this.BOARD_SIZE || y < 0 || y >= this.BOARD_SIZE) {
       throw new BadRequestException(
-        `Coordinates must be between 0 and ${this.BOARD_SIZE - 1}`
+        `Coordinates must be between 0 and ${this.BOARD_SIZE - 1}`,
       );
     }
   }
@@ -80,18 +80,18 @@ export class GameValidatorService {
   }
 
   private validateSingleShipPlacement(ship: ShipPosition): void {
-    const size = this.SHIP_SIZES[ship.type as ShipType];
-    
+    const size = this.SHIP_SIZES[ship.type];
+
     if (ship.direction === 'horizontal') {
       if (ship.x + size > this.BOARD_SIZE || ship.y >= this.BOARD_SIZE) {
         throw new BadRequestException(
-          `Ship ${ship.type} at (${ship.x}, ${ship.y}) goes outside board boundaries`
+          `Ship ${ship.type} at (${ship.x}, ${ship.y}) goes outside board boundaries`,
         );
       }
     } else {
       if (ship.x >= this.BOARD_SIZE || ship.y + size > this.BOARD_SIZE) {
         throw new BadRequestException(
-          `Ship ${ship.type} at (${ship.x}, ${ship.y}) goes outside board boundaries`
+          `Ship ${ship.type} at (${ship.x}, ${ship.y}) goes outside board boundaries`,
         );
       }
     }
@@ -101,11 +101,11 @@ export class GameValidatorService {
     const occupiedCells = new Set<string>();
 
     for (const ship of ships) {
-      const size = this.SHIP_SIZES[ship.type as ShipType];
-      
+      const size = this.SHIP_SIZES[ship.type];
+
       for (let i = 0; i < size; i++) {
         let x: number, y: number;
-        
+
         if (ship.direction === 'horizontal') {
           x = ship.x + i;
           y = ship.y;

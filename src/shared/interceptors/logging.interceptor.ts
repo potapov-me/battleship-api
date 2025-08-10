@@ -18,24 +18,20 @@ export class LoggingInterceptor implements NestInterceptor {
     const userAgent = request.get('User-Agent') || '';
     const now = Date.now();
 
-    this.logger.log(
-      `${method} ${url} - ${ip} - ${userAgent}`,
-    );
+    this.logger.log(`${method} ${url} - ${ip} - ${userAgent}`);
 
     return next.handle().pipe(
       tap({
         next: () => {
           const responseTime = Date.now() - now;
-          this.logger.log(
-            `${method} ${url} - ${responseTime}ms`,
-          );
+          this.logger.log(`${method} ${url} - ${responseTime}ms`);
         },
         error: (error) => {
           const responseTime = Date.now() - now;
           this.logger.error(
             `${method} ${url} - ${responseTime}ms - Error: ${error.message}`,
           );
-        }
+        },
       }),
     );
   }

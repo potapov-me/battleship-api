@@ -36,7 +36,7 @@ export class RoomService {
       status: RoomStatus.Waiting,
       createdAt: new Date(),
     };
-    
+
     const roomKey = this.getRoomKey(id);
     await this.redisService.set(roomKey, room, this.ROOM_TTL);
     return room;
@@ -51,12 +51,14 @@ export class RoomService {
       throw new BadRequestException('Room is not joinable');
     }
     if (room.creatorId === userId) {
-      throw new BadRequestException('Creator cannot join their own room as opponent');
+      throw new BadRequestException(
+        'Creator cannot join their own room as opponent',
+      );
     }
     if (room.opponentId) {
       throw new BadRequestException('Room already has an opponent');
     }
-    
+
     room.opponentId = userId;
     const roomKey = this.getRoomKey(roomId);
     await this.redisService.set(roomKey, room, this.ROOM_TTL);
@@ -71,7 +73,7 @@ export class RoomService {
     if (!room.opponentId) {
       throw new BadRequestException('Cannot start game without an opponent');
     }
-    
+
     room.status = RoomStatus.Active;
     room.startedAt = new Date();
     const roomKey = this.getRoomKey(roomId);
@@ -84,7 +86,7 @@ export class RoomService {
     if (room.status === RoomStatus.Finished) {
       return room;
     }
-    
+
     room.status = RoomStatus.Finished;
     room.finishedAt = new Date();
     const roomKey = this.getRoomKey(roomId);
@@ -104,28 +106,28 @@ export class RoomService {
   async getActiveRooms(): Promise<RoomEntity[]> {
     const roomKeys = await this.redisService.keys(`${this.ROOM_KEY_PREFIX}*`);
     const rooms: RoomEntity[] = [];
-    
+
     for (const key of roomKeys) {
       const room = await this.redisService.get<RoomEntity>(key);
       if (room && room.status === RoomStatus.Waiting) {
         rooms.push(room);
       }
     }
-    
+
     return rooms;
   }
 
   async listRooms(): Promise<RoomEntity[]> {
     const roomKeys = await this.redisService.keys(`${this.ROOM_KEY_PREFIX}*`);
     const rooms: RoomEntity[] = [];
-    
+
     for (const key of roomKeys) {
       const room = await this.redisService.get<RoomEntity>(key);
       if (room) {
         rooms.push(room);
       }
     }
-    
+
     return rooms;
   }
 

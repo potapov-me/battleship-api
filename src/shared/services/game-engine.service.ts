@@ -1,7 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { IGameEngine } from '../interfaces/game-engine.interface';
 import { Board, Cell } from '../models/board.model';
-import { Ship, ShipType, ShipPosition, ShipDirection } from '../models/ship.model';
+import {
+  Ship,
+  ShipType,
+  ShipPosition,
+  ShipDirection,
+} from '../models/ship.model';
 import { GAME_CONSTANTS } from '../constants/game.constants';
 import { AttackResult } from '../types/game.types';
 
@@ -40,14 +45,17 @@ export class GameEngineService implements IGameEngine {
     // Проверяем количество кораблей каждого типа
     const shipCounts = new Map<ShipType, number>();
     for (const ship of ships) {
-      const shipType = ship.type as ShipType;
+      const shipType = ship.type;
       shipCounts.set(shipType, (shipCounts.get(shipType) || 0) + 1);
     }
 
     for (const [shipType, required] of Object.entries(this.REQUIRED_SHIPS)) {
-      const actualCount = shipCounts.get(shipType.toLowerCase() as ShipType) || 0;
+      const actualCount =
+        shipCounts.get(shipType.toLowerCase() as ShipType) || 0;
       if (actualCount !== required) {
-        this.logger.warn(`Invalid ship count for ${shipType}: expected ${required}, got ${actualCount}`);
+        this.logger.warn(
+          `Invalid ship count for ${shipType}: expected ${required}, got ${actualCount}`,
+        );
         return false;
       }
     }
@@ -55,7 +63,9 @@ export class GameEngineService implements IGameEngine {
     // Проверяем размещение каждого корабля
     for (const ship of ships) {
       if (!this.isValidShipPlacement(board, ship)) {
-        this.logger.warn(`Invalid ship placement for ${ship.type} at (${ship.x}, ${ship.y})`);
+        this.logger.warn(
+          `Invalid ship placement for ${ship.type} at (${ship.x}, ${ship.y})`,
+        );
         return false;
       }
     }
@@ -70,15 +80,22 @@ export class GameEngineService implements IGameEngine {
   }
 
   private isValidShipPlacement(board: Board, ship: ShipPosition): boolean {
-    const size = this.SHIP_SIZES[ship.type.toUpperCase() as keyof typeof this.SHIP_SIZES];
-    
+    const size =
+      this.SHIP_SIZES[ship.type.toUpperCase() as keyof typeof this.SHIP_SIZES];
+
     // Проверяем границы
     if (ship.direction === ShipDirection.HORIZONTAL) {
-      if (ship.x + size > GAME_CONSTANTS.BOARD_SIZE || ship.y >= GAME_CONSTANTS.BOARD_SIZE) {
+      if (
+        ship.x + size > GAME_CONSTANTS.BOARD_SIZE ||
+        ship.y >= GAME_CONSTANTS.BOARD_SIZE
+      ) {
         return false;
       }
     } else {
-      if (ship.x >= GAME_CONSTANTS.BOARD_SIZE || ship.y + size > GAME_CONSTANTS.BOARD_SIZE) {
+      if (
+        ship.x >= GAME_CONSTANTS.BOARD_SIZE ||
+        ship.y + size > GAME_CONSTANTS.BOARD_SIZE
+      ) {
         return false;
       }
     }
@@ -90,11 +107,14 @@ export class GameEngineService implements IGameEngine {
     const occupiedCells = new Set<string>();
 
     for (const ship of ships) {
-      const size = this.SHIP_SIZES[ship.type.toUpperCase() as keyof typeof this.SHIP_SIZES];
-      
+      const size =
+        this.SHIP_SIZES[
+          ship.type.toUpperCase() as keyof typeof this.SHIP_SIZES
+        ];
+
       for (let i = 0; i < size; i++) {
         let x: number, y: number;
-        
+
         if (ship.direction === ShipDirection.HORIZONTAL) {
           x = ship.x + i;
           y = ship.y;
@@ -120,21 +140,24 @@ export class GameEngineService implements IGameEngine {
     }
 
     const newBoard = new Board();
-    newBoard.grid = board.grid.map(row => row.map(cell => ({ ...cell })));
+    newBoard.grid = board.grid.map((row) => row.map((cell) => ({ ...cell })));
     newBoard.ships = [];
     newBoard.playerId = board.playerId;
 
     for (const shipPosition of ships) {
       const ship = new Ship();
-      ship.type = shipPosition.type as ShipType;
+      ship.type = shipPosition.type;
       ship.position = shipPosition;
       ship.isSunk = false;
 
       // Размещаем корабль на доске
-      const size = this.SHIP_SIZES[ship.type.toUpperCase() as keyof typeof this.SHIP_SIZES];
+      const size =
+        this.SHIP_SIZES[
+          ship.type.toUpperCase() as keyof typeof this.SHIP_SIZES
+        ];
       for (let i = 0; i < size; i++) {
         let x: number, y: number;
-        
+
         if (shipPosition.direction === ShipDirection.HORIZONTAL) {
           x = shipPosition.x + i;
           y = shipPosition.y;
@@ -153,8 +176,15 @@ export class GameEngineService implements IGameEngine {
   }
 
   processAttack(board: Board, x: number, y: number): AttackResult {
-    if (x < 0 || x >= GAME_CONSTANTS.BOARD_SIZE || y < 0 || y >= GAME_CONSTANTS.BOARD_SIZE) {
-      throw new Error(`Invalid coordinates: coordinates must be between 0 and ${GAME_CONSTANTS.BOARD_SIZE - 1}`);
+    if (
+      x < 0 ||
+      x >= GAME_CONSTANTS.BOARD_SIZE ||
+      y < 0 ||
+      y >= GAME_CONSTANTS.BOARD_SIZE
+    ) {
+      throw new Error(
+        `Invalid coordinates: coordinates must be between 0 and ${GAME_CONSTANTS.BOARD_SIZE - 1}`,
+      );
     }
 
     const cell = board.grid[x][y];
@@ -166,13 +196,13 @@ export class GameEngineService implements IGameEngine {
     const hit = !!cell.shipId;
 
     if (hit) {
-      const ship = board.ships.find(s => s.type === cell.shipId);
+      const ship = board.ships.find((s) => s.type === cell.shipId);
       if (ship) {
         ship.isSunk = this.isShipSunk(board, ship);
         return {
           hit: true,
           sunk: ship.isSunk,
-          shipId: ship.type
+          shipId: ship.type,
         };
       }
     }
@@ -181,12 +211,13 @@ export class GameEngineService implements IGameEngine {
   }
 
   private isShipSunk(board: Board, ship: Ship): boolean {
-    const size = this.SHIP_SIZES[ship.type.toUpperCase() as keyof typeof this.SHIP_SIZES];
+    const size =
+      this.SHIP_SIZES[ship.type.toUpperCase() as keyof typeof this.SHIP_SIZES];
     let hitCount = 0;
 
     for (let i = 0; i < size; i++) {
       let x: number, y: number;
-      
+
       if (ship.position.direction === ShipDirection.HORIZONTAL) {
         x = ship.position.x + i;
         y = ship.position.y;
@@ -204,6 +235,6 @@ export class GameEngineService implements IGameEngine {
   }
 
   checkWinCondition(board: Board): boolean {
-    return board.ships.every(ship => ship.isSunk);
+    return board.ships.every((ship) => ship.isSunk);
   }
 }

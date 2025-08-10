@@ -1,29 +1,41 @@
-import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import * as bcrypt from 'bcrypt';
 import { User, UserDocument } from '../users/schemas/user.schema';
-import { 
-  CreatePlayerDto, 
-  UpdatePlayerDto, 
-  PlayerResponseDto, 
-  PlayerStatsDto, 
+import {
+  CreatePlayerDto,
+  UpdatePlayerDto,
+  PlayerResponseDto,
+  PlayerStatsDto,
   PlayerListResponseDto,
-  PlayerSearchDto 
+  PlayerSearchDto,
 } from './dto/player.dto';
 
 @Injectable()
 export class PlayersService {
-  constructor(
-    @InjectModel(User.name) private userModel: Model<UserDocument>,
-  ) {}
+  constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) {}
 
-  async createPlayer(createPlayerDto: CreatePlayerDto): Promise<PlayerResponseDto> {
-    const { username, email, password, roles = ['player'], bio, avatar } = createPlayerDto;
+  async createPlayer(
+    createPlayerDto: CreatePlayerDto,
+  ): Promise<PlayerResponseDto> {
+    const {
+      username,
+      email,
+      password,
+      roles = ['player'],
+      bio,
+      avatar,
+    } = createPlayerDto;
 
     // Проверяем уникальность username и email
     const existingUser = await this.userModel.findOne({
-      $or: [{ username }, { email }]
+      $or: [{ username }, { email }],
     });
 
     if (existingUser) {
@@ -60,19 +72,19 @@ export class PlayersService {
   }
 
   async findAllPlayers(
-    page: number = 1, 
-    limit: number = 10, 
-    searchParams?: PlayerSearchDto
+    page: number = 1,
+    limit: number = 10,
+    searchParams?: PlayerSearchDto,
   ): Promise<PlayerListResponseDto> {
     const skip = (page - 1) * limit;
-    
+
     // Строим запрос
     const query: any = {};
-    
+
     if (searchParams?.search) {
       query.$or = [
         { username: { $regex: searchParams.search, $options: 'i' } },
-        { email: { $regex: searchParams.search, $options: 'i' } }
+        { email: { $regex: searchParams.search, $options: 'i' } },
       ];
     }
 
@@ -106,15 +118,16 @@ export class PlayersService {
     }
 
     const [users, total] = await Promise.all([
-      this.userModel.find(query)
+      this.userModel
+        .find(query)
         .sort(sortOptions)
         .skip(skip)
         .limit(limit)
         .exec(),
-      this.userModel.countDocuments(query).exec()
+      this.userModel.countDocuments(query).exec(),
     ]);
 
-    const players = users.map(user => this.mapToPlayerResponse(user));
+    const players = users.map((user) => this.mapToPlayerResponse(user));
     const totalPages = Math.ceil(total / limit);
 
     return {
@@ -159,7 +172,10 @@ export class PlayersService {
     return this.mapToPlayerResponse(user);
   }
 
-  async updatePlayer(id: string, updatePlayerDto: UpdatePlayerDto): Promise<PlayerResponseDto> {
+  async updatePlayer(
+    id: string,
+    updatePlayerDto: UpdatePlayerDto,
+  ): Promise<PlayerResponseDto> {
     if (!Types.ObjectId.isValid(id)) {
       throw new BadRequestException('Неверный формат ID');
     }
@@ -170,15 +186,22 @@ export class PlayersService {
     }
 
     // Проверяем уникальность username и email если они изменяются
-    if (updatePlayerDto.username && updatePlayerDto.username !== user.username) {
-      const existingUser = await this.userModel.findOne({ username: updatePlayerDto.username });
+    if (
+      updatePlayerDto.username &&
+      updatePlayerDto.username !== user.username
+    ) {
+      const existingUser = await this.userModel.findOne({
+        username: updatePlayerDto.username,
+      });
       if (existingUser) {
         throw new ConflictException('Username уже используется');
       }
     }
 
     if (updatePlayerDto.email && updatePlayerDto.email !== user.email) {
-      const existingUser = await this.userModel.findOne({ email: updatePlayerDto.email });
+      const existingUser = await this.userModel.findOne({
+        email: updatePlayerDto.email,
+      });
       if (existingUser) {
         throw new ConflictException('Email уже используется');
       }
@@ -187,14 +210,21 @@ export class PlayersService {
     // Хешируем пароль если он изменяется
     if (updatePlayerDto.password) {
       const saltRounds = 10;
-      updatePlayerDto.password = await bcrypt.hash(updatePlayerDto.password, saltRounds);
+      updatePlayerDto.password = await bcrypt.hash(
+        updatePlayerDto.password,
+        saltRounds,
+      );
     }
 
     const updatedUser = await this.userModel.findByIdAndUpdate(
       id,
       { ...updatePlayerDto, updatedAt: new Date() },
-      { new: true }
+      { new: true },
     );
+
+    if (!updatedUser) {
+      throw new NotFoundException('Игрок не найден');
+    }
 
     return this.mapToPlayerResponse(updatedUser);
   }
@@ -224,13 +254,15 @@ export class PlayersService {
 
     // TODO: Реализовать подсчет статистики из игр
     // Пока возвращаем базовую статистику из полей пользователя
+    const winRate =
+      user.totalGames > 0 ? Math.round((user.wins / user.totalGames) * 100) : 0;
     const stats: PlayerStatsDto = {
       id: user.id,
       username: user.username,
       totalGames: user.totalGames,
       wins: user.wins,
       losses: user.losses,
-      winRate: user.winRate,
+      winRate: winRate,
       rating: user.rating,
       averageOpponentRating: 1000, // TODO: Реализовать подсчет
       bestRating: user.rating, // TODO: Реализовать отслеживание лучшего рейтинга
@@ -241,11 +273,11 @@ export class PlayersService {
   }
 
   async confirmEmail(token: string): Promise<void> {
-    const user = await this.userModel.findOne({ 
+    const user = await this.userModel.findOne({
       emailConfirmationToken: token,
-      emailConfirmationExpires: { $gt: new Date() }
+      emailConfirmationExpires: { $gt: new Date() },
     });
-    
+
     if (!user) {
       throw new BadRequestException('Неверный или просроченный токен');
     }
@@ -262,7 +294,9 @@ export class PlayersService {
       throw new NotFoundException('Пользователь не найден');
     }
 
-    const token = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    const token =
+      Math.random().toString(36).substring(2, 15) +
+      Math.random().toString(36).substring(2, 15);
     const expiresAt = new Date();
     expiresAt.setHours(expiresAt.getHours() + 24); // Токен действителен 24 часа
 
@@ -274,16 +308,16 @@ export class PlayersService {
   }
 
   async updateLastLogin(id: string): Promise<void> {
-    await this.userModel.findByIdAndUpdate(id, { 
-      lastLoginAt: new Date() 
+    await this.userModel.findByIdAndUpdate(id, {
+      lastLoginAt: new Date(),
     });
   }
 
   async updatePlayerStats(
-    id: string, 
-    isWin: boolean, 
+    id: string,
+    isWin: boolean,
     opponentRating: number,
-    ratingChange: number
+    ratingChange: number,
   ): Promise<void> {
     const user = await this.userModel.findById(id);
     if (!user) {
@@ -311,25 +345,30 @@ export class PlayersService {
       .limit(limit)
       .exec();
 
-    return users.map(user => this.mapToPlayerResponse(user));
+    return users.map((user) => this.mapToPlayerResponse(user));
   }
 
-  async searchPlayers(query: string, limit: number = 10): Promise<PlayerResponseDto[]> {
+  async searchPlayers(
+    query: string,
+    limit: number = 10,
+  ): Promise<PlayerResponseDto[]> {
     const users = await this.userModel
       .find({
         $or: [
           { username: { $regex: query, $options: 'i' } },
-          { email: { $regex: query, $options: 'i' } }
+          { email: { $regex: query, $options: 'i' } },
         ],
-        isActive: true
+        isActive: true,
       })
       .limit(limit)
       .exec();
 
-    return users.map(user => this.mapToPlayerResponse(user));
+    return users.map((user) => this.mapToPlayerResponse(user));
   }
 
   private mapToPlayerResponse(user: UserDocument): PlayerResponseDto {
+    const winRate =
+      user.totalGames > 0 ? Math.round((user.wins / user.totalGames) * 100) : 0;
     return {
       id: user.id,
       username: user.username,
@@ -341,11 +380,10 @@ export class PlayersService {
       totalGames: user.totalGames,
       wins: user.wins,
       losses: user.losses,
-      winRate: user.winRate,
+      winRate: winRate,
       bio: user.bio,
       avatar: user.avatar,
       lastLoginAt: user.lastLoginAt,
-      createdAt: user.createdAt,
       createdAt: user.createdAt || new Date(),
       updatedAt: user.updatedAt || new Date(),
     };

@@ -56,7 +56,10 @@ describe('RoomController', () => {
       const result = await controller.createRoom(createRoomDto);
 
       expect(result).toEqual(mockRoom);
-      expect(mockRoomService.createRoom).toHaveBeenCalledWith(createRoomDto.userId, createRoomDto.name);
+      expect(mockRoomService.createRoom).toHaveBeenCalledWith(
+        createRoomDto.userId,
+        createRoomDto.name,
+      );
     });
 
     it('should handle service errors', async () => {
@@ -68,7 +71,9 @@ describe('RoomController', () => {
       const error = new Error('Failed to create room');
       mockRoomService.createRoom.mockRejectedValue(error);
 
-      await expect(controller.createRoom(createRoomDto)).rejects.toThrow('Failed to create room');
+      await expect(controller.createRoom(createRoomDto)).rejects.toThrow(
+        'Не удалось создать комнату',
+      );
     });
   });
 
@@ -91,7 +96,10 @@ describe('RoomController', () => {
       const result = await controller.joinRoom(roomId, joinRoomDto);
 
       expect(result).toEqual(mockRoom);
-      expect(mockRoomService.joinRoom).toHaveBeenCalledWith(roomId, joinRoomDto.userId);
+      expect(mockRoomService.joinRoom).toHaveBeenCalledWith(
+        roomId,
+        joinRoomDto.userId,
+      );
     });
 
     it('should handle service errors', async () => {
@@ -103,7 +111,9 @@ describe('RoomController', () => {
       const error = new Error('Room not found');
       mockRoomService.joinRoom.mockRejectedValue(error);
 
-      await expect(controller.joinRoom(roomId, joinRoomDto)).rejects.toThrow('Room not found');
+      await expect(controller.joinRoom(roomId, joinRoomDto)).rejects.toThrow(
+        'Не удалось присоединиться к комнате',
+      );
     });
   });
 
@@ -135,7 +145,9 @@ describe('RoomController', () => {
       const error = new Error('Failed to get rooms');
       mockRoomService.getActiveRooms.mockRejectedValue(error);
 
-      await expect(controller.getActiveRooms()).rejects.toThrow('Failed to get rooms');
+      await expect(controller.getActiveRooms()).rejects.toThrow(
+        'Не удалось получить список комнат',
+      );
     });
   });
 });

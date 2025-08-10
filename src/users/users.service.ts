@@ -75,7 +75,9 @@ export class UsersService {
 
   async confirmEmailByToken(token: string): Promise<UserDocument | null> {
     try {
-      const user = await this.userModel.findOne({ emailConfirmationToken: token });
+      const user = await this.userModel.findOne({
+        emailConfirmationToken: token,
+      });
       if (!user) {
         return null;
       }

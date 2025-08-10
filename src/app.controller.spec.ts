@@ -38,21 +38,21 @@ describe('AppController', () => {
 
     it('should return correct environment', () => {
       const result = appController.getHealth();
-      
+
       expect(result.environment).toBeDefined();
       expect(typeof result.environment).toBe('string');
     });
 
     it('should return valid timestamp', () => {
       const result = appController.getHealth();
-      
+
       expect(result.timestamp).toBeDefined();
       expect(new Date(result.timestamp).getTime()).not.toBeNaN();
     });
 
     it('should return valid uptime', () => {
       const result = appController.getHealth();
-      
+
       expect(result.uptime).toBeDefined();
       expect(typeof result.uptime).toBe('number');
       expect(result.uptime).toBeGreaterThan(0);

@@ -9,8 +9,14 @@ import { NotificationService } from './services/notification.service';
 import { GameValidatorService } from './validators/game-validator.service';
 import { RateLimitGuard } from './guards/rate-limit.guard';
 import { AuditInterceptor } from './interceptors/audit.interceptor';
-import type { IGameEngine, IGameStateManager } from './interfaces/game-engine.interface';
-import type { INotificationService, IAuditService } from './interfaces/notification.interface';
+import type {
+  IGameEngine,
+  IGameStateManager,
+} from './interfaces/game-engine.interface';
+import type {
+  INotificationService,
+  IAuditService,
+} from './interfaces/notification.interface';
 
 @Global()
 @Module({
@@ -59,5 +65,3 @@ import type { INotificationService, IAuditService } from './interfaces/notificat
   ],
 })
 export class SharedModule {}
-
-

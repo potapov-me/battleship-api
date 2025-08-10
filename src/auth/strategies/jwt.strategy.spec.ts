@@ -137,7 +137,8 @@ describe('JwtStrategy', () => {
 
     it('should handle payload with very long email', async () => {
       const payload = {
-        email: 'very.long.email.address.with.many.subdomains@very.long.domain.name.example.com',
+        email:
+          'very.long.email.address.with.many.subdomains@very.long.domain.name.example.com',
         sub: 'longemail-id',
         username: 'longemailuser',
       };
@@ -146,7 +147,8 @@ describe('JwtStrategy', () => {
 
       expect(result).toEqual({
         id: 'longemail-id',
-        email: 'very.long.email.address.with.many.subdomains@very.long.domain.name.example.com',
+        email:
+          'very.long.email.address.with.many.subdomains@very.long.domain.name.example.com',
         username: 'longemailuser',
         roles: ['user'],
       });

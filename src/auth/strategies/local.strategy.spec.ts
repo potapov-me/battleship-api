@@ -50,7 +50,10 @@ describe('LocalStrategy', () => {
 
       const result = await strategy.validate(email, password);
 
-      expect(mockAuthService.validateUser).toHaveBeenCalledWith(email, password);
+      expect(mockAuthService.validateUser).toHaveBeenCalledWith(
+        email,
+        password,
+      );
       expect(result).toEqual(mockUser);
     });
 
@@ -61,10 +64,13 @@ describe('LocalStrategy', () => {
       mockAuthService.validateUser.mockResolvedValue(null);
 
       await expect(strategy.validate(email, password)).rejects.toThrow(
-        UnauthorizedException
+        UnauthorizedException,
       );
 
-      expect(mockAuthService.validateUser).toHaveBeenCalledWith(email, password);
+      expect(mockAuthService.validateUser).toHaveBeenCalledWith(
+        email,
+        password,
+      );
     });
 
     it('should throw UnauthorizedException when password is incorrect', async () => {
@@ -74,10 +80,13 @@ describe('LocalStrategy', () => {
       mockAuthService.validateUser.mockResolvedValue(null);
 
       await expect(strategy.validate(email, password)).rejects.toThrow(
-        UnauthorizedException
+        UnauthorizedException,
       );
 
-      expect(mockAuthService.validateUser).toHaveBeenCalledWith(email, password);
+      expect(mockAuthService.validateUser).toHaveBeenCalledWith(
+        email,
+        password,
+      );
     });
 
     it('should return admin user when valid admin credentials are provided', async () => {
@@ -95,7 +104,10 @@ describe('LocalStrategy', () => {
 
       const result = await strategy.validate(email, password);
 
-      expect(mockAuthService.validateUser).toHaveBeenCalledWith(email, password);
+      expect(mockAuthService.validateUser).toHaveBeenCalledWith(
+        email,
+        password,
+      );
       expect(result).toEqual(mockAdminUser);
     });
 
@@ -112,7 +124,10 @@ describe('LocalStrategy', () => {
 
       const result = await strategy.validate(email, password);
 
-      expect(mockAuthService.validateUser).toHaveBeenCalledWith(email, password);
+      expect(mockAuthService.validateUser).toHaveBeenCalledWith(
+        email,
+        password,
+      );
       expect(result).toEqual(mockMinimalUser);
     });
 
@@ -123,10 +138,13 @@ describe('LocalStrategy', () => {
       mockAuthService.validateUser.mockResolvedValue(null);
 
       await expect(strategy.validate(email, password)).rejects.toThrow(
-        UnauthorizedException
+        UnauthorizedException,
       );
 
-      expect(mockAuthService.validateUser).toHaveBeenCalledWith(email, password);
+      expect(mockAuthService.validateUser).toHaveBeenCalledWith(
+        email,
+        password,
+      );
     });
 
     it('should handle empty password', async () => {
@@ -136,10 +154,13 @@ describe('LocalStrategy', () => {
       mockAuthService.validateUser.mockResolvedValue(null);
 
       await expect(strategy.validate(email, password)).rejects.toThrow(
-        UnauthorizedException
+        UnauthorizedException,
       );
 
-      expect(mockAuthService.validateUser).toHaveBeenCalledWith(email, password);
+      expect(mockAuthService.validateUser).toHaveBeenCalledWith(
+        email,
+        password,
+      );
     });
 
     it('should handle special characters in email', async () => {
@@ -157,7 +178,10 @@ describe('LocalStrategy', () => {
 
       const result = await strategy.validate(email, password);
 
-      expect(mockAuthService.validateUser).toHaveBeenCalledWith(email, password);
+      expect(mockAuthService.validateUser).toHaveBeenCalledWith(
+        email,
+        password,
+      );
       expect(result).toEqual(mockUser);
     });
 
@@ -176,7 +200,10 @@ describe('LocalStrategy', () => {
 
       const result = await strategy.validate(email, password);
 
-      expect(mockAuthService.validateUser).toHaveBeenCalledWith(email, password);
+      expect(mockAuthService.validateUser).toHaveBeenCalledWith(
+        email,
+        password,
+      );
       expect(result).toEqual(mockUser);
     });
 
@@ -187,18 +214,25 @@ describe('LocalStrategy', () => {
       const errorMessage = 'Authentication service error';
       mockAuthService.validateUser.mockRejectedValue(new Error(errorMessage));
 
-      await expect(strategy.validate(email, password)).rejects.toThrow(errorMessage);
-      expect(mockAuthService.validateUser).toHaveBeenCalledWith(email, password);
+      await expect(strategy.validate(email, password)).rejects.toThrow(
+        errorMessage,
+      );
+      expect(mockAuthService.validateUser).toHaveBeenCalledWith(
+        email,
+        password,
+      );
     });
 
     it('should handle very long email', async () => {
-      const email = 'very.long.email.address.with.many.subdomains@very.long.domain.name.example.com';
+      const email =
+        'very.long.email.address.with.many.subdomains@very.long.domain.name.example.com';
       const password = 'password123';
 
       const mockUser = {
         id: 'user-id',
         username: 'longemailuser',
-        email: 'very.long.email.address.with.many.subdomains@very.long.domain.name.example.com',
+        email:
+          'very.long.email.address.with.many.subdomains@very.long.domain.name.example.com',
         roles: ['user'],
       };
 
@@ -206,13 +240,17 @@ describe('LocalStrategy', () => {
 
       const result = await strategy.validate(email, password);
 
-      expect(mockAuthService.validateUser).toHaveBeenCalledWith(email, password);
+      expect(mockAuthService.validateUser).toHaveBeenCalledWith(
+        email,
+        password,
+      );
       expect(result).toEqual(mockUser);
     });
 
     it('should handle very long password', async () => {
       const email = 'test@example.com';
-      const password = 'very_long_password_with_many_characters_123!@#$%^&*()_+-=[]{}|;:,.<>?';
+      const password =
+        'very_long_password_with_many_characters_123!@#$%^&*()_+-=[]{}|;:,.<>?';
 
       const mockUser = {
         id: 'user-id',
@@ -225,7 +263,10 @@ describe('LocalStrategy', () => {
 
       const result = await strategy.validate(email, password);
 
-      expect(mockAuthService.validateUser).toHaveBeenCalledWith(email, password);
+      expect(mockAuthService.validateUser).toHaveBeenCalledWith(
+        email,
+        password,
+      );
       expect(result).toEqual(mockUser);
     });
   });

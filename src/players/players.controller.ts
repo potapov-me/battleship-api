@@ -1,33 +1,33 @@
-import { 
-  Controller, 
-  Get, 
-  Post, 
-  Put, 
-  Delete, 
-  Body, 
-  Param, 
-  Query, 
-  HttpCode, 
+import {
+  Controller,
+  Get,
+  Post,
+  Put,
+  Delete,
+  Body,
+  Param,
+  Query,
+  HttpCode,
   HttpStatus,
   UseGuards,
-  Request
+  Request,
 } from '@nestjs/common';
-import { 
-  ApiTags, 
-  ApiOperation, 
-  ApiResponse, 
-  ApiParam, 
-  ApiQuery, 
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiParam,
+  ApiQuery,
   ApiBearerAuth,
-  ApiBody 
+  ApiBody,
 } from '@nestjs/swagger';
 import { PlayersService } from './players.service';
-import { 
-  CreatePlayerDto, 
-  UpdatePlayerDto, 
-  PlayerResponseDto, 
-  PlayerStatsDto, 
-  PlayerListResponseDto 
+import {
+  CreatePlayerDto,
+  UpdatePlayerDto,
+  PlayerResponseDto,
+  PlayerStatsDto,
+  PlayerListResponseDto,
 } from './dto/player.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
@@ -38,71 +38,74 @@ export class PlayersController {
 
   @Post()
   @ApiOperation({ summary: 'Создать нового игрока' })
-  @ApiResponse({ 
-    status: 201, 
-    description: 'Игрок успешно создан', 
-    type: PlayerResponseDto 
+  @ApiResponse({
+    status: 201,
+    description: 'Игрок успешно создан',
+    type: PlayerResponseDto,
   })
-  @ApiResponse({ 
-    status: 409, 
-    description: 'Username или email уже используется' 
+  @ApiResponse({
+    status: 409,
+    description: 'Username или email уже используется',
   })
-  @ApiResponse({ 
-    status: 400, 
-    description: 'Ошибка валидации данных' 
+  @ApiResponse({
+    status: 400,
+    description: 'Ошибка валидации данных',
   })
   @HttpCode(HttpStatus.CREATED)
-  async createPlayer(@Body() createPlayerDto: CreatePlayerDto): Promise<PlayerResponseDto> {
+  async createPlayer(
+    @Body() createPlayerDto: CreatePlayerDto,
+  ): Promise<PlayerResponseDto> {
     return this.playersService.createPlayer(createPlayerDto);
   }
 
   @Get()
   @ApiOperation({ summary: 'Получить список всех игроков' })
-  @ApiQuery({ 
-    name: 'page', 
-    required: false, 
-    description: 'Номер страницы', 
-    type: Number 
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    description: 'Номер страницы',
+    type: Number,
   })
-  @ApiQuery({ 
-    name: 'limit', 
-    required: false, 
-    description: 'Количество игроков на странице', 
-    type: Number 
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    description: 'Количество игроков на странице',
+    type: Number,
   })
-  @ApiQuery({ 
-    name: 'search', 
-    required: false, 
-    description: 'Поиск по username или email' 
+  @ApiQuery({
+    name: 'search',
+    required: false,
+    description: 'Поиск по username или email',
   })
-  @ApiResponse({ 
-    status: 200, 
-    description: 'Список игроков получен', 
-    type: PlayerListResponseDto 
+  @ApiResponse({
+    status: 200,
+    description: 'Список игроков получен',
+    type: PlayerListResponseDto,
   })
   async findAllPlayers(
     @Query('page') page?: number,
     @Query('limit') limit?: number,
     @Query('search') search?: string,
   ): Promise<PlayerListResponseDto> {
-    return this.playersService.findAllPlayers(page, limit, search);
+    const searchParams = search ? { search } : undefined;
+    return this.playersService.findAllPlayers(page, limit, searchParams);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Получить игрока по ID' })
   @ApiParam({ name: 'id', description: 'ID игрока' })
-  @ApiResponse({ 
-    status: 200, 
-    description: 'Игрок найден', 
-    type: PlayerResponseDto 
+  @ApiResponse({
+    status: 200,
+    description: 'Игрок найден',
+    type: PlayerResponseDto,
   })
-  @ApiResponse({ 
-    status: 404, 
-    description: 'Игрок не найден' 
+  @ApiResponse({
+    status: 404,
+    description: 'Игрок не найден',
   })
-  @ApiResponse({ 
-    status: 400, 
-    description: 'Неверный формат ID' 
+  @ApiResponse({
+    status: 400,
+    description: 'Неверный формат ID',
   })
   async findPlayerById(@Param('id') id: string): Promise<PlayerResponseDto> {
     return this.playersService.findPlayerById(id);
@@ -111,32 +114,36 @@ export class PlayersController {
   @Get('username/:username')
   @ApiOperation({ summary: 'Получить игрока по username' })
   @ApiParam({ name: 'username', description: 'Username игрока' })
-  @ApiResponse({ 
-    status: 200, 
-    description: 'Игрок найден', 
-    type: PlayerResponseDto 
+  @ApiResponse({
+    status: 200,
+    description: 'Игрок найден',
+    type: PlayerResponseDto,
   })
-  @ApiResponse({ 
-    status: 404, 
-    description: 'Игрок не найден' 
+  @ApiResponse({
+    status: 404,
+    description: 'Игрок не найден',
   })
-  async findPlayerByUsername(@Param('username') username: string): Promise<PlayerResponseDto> {
+  async findPlayerByUsername(
+    @Param('username') username: string,
+  ): Promise<PlayerResponseDto> {
     return this.playersService.findPlayerByUsername(username);
   }
 
   @Get('email/:email')
   @ApiOperation({ summary: 'Получить игрока по email' })
   @ApiParam({ name: 'email', description: 'Email игрока' })
-  @ApiResponse({ 
-    status: 200, 
-    description: 'Игрок найден', 
-    type: PlayerResponseDto 
+  @ApiResponse({
+    status: 200,
+    description: 'Игрок найден',
+    type: PlayerResponseDto,
   })
-  @ApiResponse({ 
-    status: 404, 
-    description: 'Игрок не найден' 
+  @ApiResponse({
+    status: 404,
+    description: 'Игрок не найден',
   })
-  async findPlayerByEmail(@Param('email') email: string): Promise<PlayerResponseDto> {
+  async findPlayerByEmail(
+    @Param('email') email: string,
+  ): Promise<PlayerResponseDto> {
     return this.playersService.findPlayerByEmail(email);
   }
 
@@ -145,26 +152,26 @@ export class PlayersController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Обновить данные игрока' })
   @ApiParam({ name: 'id', description: 'ID игрока' })
-  @ApiResponse({ 
-    status: 200, 
-    description: 'Данные игрока обновлены', 
-    type: PlayerResponseDto 
+  @ApiResponse({
+    status: 200,
+    description: 'Данные игрока обновлены',
+    type: PlayerResponseDto,
   })
-  @ApiResponse({ 
-    status: 404, 
-    description: 'Игрок не найден' 
+  @ApiResponse({
+    status: 404,
+    description: 'Игрок не найден',
   })
-  @ApiResponse({ 
-    status: 409, 
-    description: 'Username или email уже используется' 
+  @ApiResponse({
+    status: 409,
+    description: 'Username или email уже используется',
   })
-  @ApiResponse({ 
-    status: 400, 
-    description: 'Ошибка валидации данных' 
+  @ApiResponse({
+    status: 400,
+    description: 'Ошибка валидации данных',
   })
-  @ApiResponse({ 
-    status: 401, 
-    description: 'Не авторизован' 
+  @ApiResponse({
+    status: 401,
+    description: 'Не авторизован',
   })
   async updatePlayer(
     @Param('id') id: string,
@@ -178,21 +185,21 @@ export class PlayersController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Удалить игрока' })
   @ApiParam({ name: 'id', description: 'ID игрока' })
-  @ApiResponse({ 
-    status: 204, 
-    description: 'Игрок успешно удален' 
+  @ApiResponse({
+    status: 204,
+    description: 'Игрок успешно удален',
   })
-  @ApiResponse({ 
-    status: 404, 
-    description: 'Игрок не найден' 
+  @ApiResponse({
+    status: 404,
+    description: 'Игрок не найден',
   })
-  @ApiResponse({ 
-    status: 400, 
-    description: 'Неверный формат ID' 
+  @ApiResponse({
+    status: 400,
+    description: 'Неверный формат ID',
   })
-  @ApiResponse({ 
-    status: 401, 
-    description: 'Не авторизован' 
+  @ApiResponse({
+    status: 401,
+    description: 'Не авторизован',
   })
   @HttpCode(HttpStatus.NO_CONTENT)
   async deletePlayer(@Param('id') id: string): Promise<void> {
@@ -202,18 +209,18 @@ export class PlayersController {
   @Get(':id/stats')
   @ApiOperation({ summary: 'Получить статистику игрока' })
   @ApiParam({ name: 'id', description: 'ID игрока' })
-  @ApiResponse({ 
-    status: 200, 
-    description: 'Статистика игрока получена', 
-    type: PlayerStatsDto 
+  @ApiResponse({
+    status: 200,
+    description: 'Статистика игрока получена',
+    type: PlayerStatsDto,
   })
-  @ApiResponse({ 
-    status: 404, 
-    description: 'Игрок не найден' 
+  @ApiResponse({
+    status: 404,
+    description: 'Игрок не найден',
   })
-  @ApiResponse({ 
-    status: 400, 
-    description: 'Неверный формат ID' 
+  @ApiResponse({
+    status: 400,
+    description: 'Неверный формат ID',
   })
   async getPlayerStats(@Param('id') id: string): Promise<PlayerStatsDto> {
     return this.playersService.getPlayerStats(id);
@@ -227,21 +234,23 @@ export class PlayersController {
       properties: {
         token: {
           type: 'string',
-          description: 'Токен подтверждения email'
-        }
+          description: 'Токен подтверждения email',
+        },
       },
-      required: ['token']
-    }
+      required: ['token'],
+    },
   })
-  @ApiResponse({ 
-    status: 200, 
-    description: 'Email успешно подтвержден' 
+  @ApiResponse({
+    status: 200,
+    description: 'Email успешно подтвержден',
   })
-  @ApiResponse({ 
-    status: 400, 
-    description: 'Неверный или просроченный токен' 
+  @ApiResponse({
+    status: 400,
+    description: 'Неверный или просроченный токен',
   })
-  async confirmEmail(@Body('token') token: string): Promise<{ message: string }> {
+  async confirmEmail(
+    @Body('token') token: string,
+  ): Promise<{ message: string }> {
     await this.playersService.confirmEmail(token);
     return { message: 'Email успешно подтвержден' };
   }
@@ -254,22 +263,25 @@ export class PlayersController {
       properties: {
         email: {
           type: 'string',
-          description: 'Email игрока'
-        }
+          description: 'Email игрока',
+        },
       },
-      required: ['email']
-    }
+      required: ['email'],
+    },
   })
-  @ApiResponse({ 
-    status: 200, 
-    description: 'Токен подтверждения сгенерирован' 
+  @ApiResponse({
+    status: 200,
+    description: 'Токен подтверждения сгенерирован',
   })
-  @ApiResponse({ 
-    status: 404, 
-    description: 'Пользователь не найден' 
+  @ApiResponse({
+    status: 404,
+    description: 'Пользователь не найден',
   })
-  async resendConfirmation(@Body('email') email: string): Promise<{ message: string }> {
-    const token = await this.playersService.generateEmailConfirmationToken(email);
+  async resendConfirmation(
+    @Body('email') email: string,
+  ): Promise<{ message: string }> {
+    const token =
+      await this.playersService.generateEmailConfirmationToken(email);
     // TODO: Отправить email с токеном
     return { message: 'Токен подтверждения сгенерирован' };
   }
@@ -278,14 +290,14 @@ export class PlayersController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Получить профиль текущего пользователя' })
-  @ApiResponse({ 
-    status: 200, 
-    description: 'Профиль получен', 
-    type: PlayerResponseDto 
+  @ApiResponse({
+    status: 200,
+    description: 'Профиль получен',
+    type: PlayerResponseDto,
   })
-  @ApiResponse({ 
-    status: 401, 
-    description: 'Не авторизован' 
+  @ApiResponse({
+    status: 401,
+    description: 'Не авторизован',
   })
   async getMyProfile(@Request() req): Promise<PlayerResponseDto> {
     return this.playersService.findPlayerById(req.user.id);
@@ -295,22 +307,22 @@ export class PlayersController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Обновить профиль текущего пользователя' })
-  @ApiResponse({ 
-    status: 200, 
-    description: 'Профиль обновлен', 
-    type: PlayerResponseDto 
+  @ApiResponse({
+    status: 200,
+    description: 'Профиль обновлен',
+    type: PlayerResponseDto,
   })
-  @ApiResponse({ 
-    status: 409, 
-    description: 'Username или email уже используется' 
+  @ApiResponse({
+    status: 409,
+    description: 'Username или email уже используется',
   })
-  @ApiResponse({ 
-    status: 400, 
-    description: 'Ошибка валидации данных' 
+  @ApiResponse({
+    status: 400,
+    description: 'Ошибка валидации данных',
   })
-  @ApiResponse({ 
-    status: 401, 
-    description: 'Не авторизован' 
+  @ApiResponse({
+    status: 401,
+    description: 'Не авторизован',
   })
   async updateMyProfile(
     @Request() req,

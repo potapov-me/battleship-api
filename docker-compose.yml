@@ -1,30 +1,28 @@
-version: '3.8'
-
 services:
-  battleship-api:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: production
-    ports:
-      - '7001:7001'
-    depends_on:
-      - mongo
-      - redis
-    environment:
-      - NODE_ENV=production
-      - PORT=7001
-      - MONGO_URI=mongodb://mongo:27017/sea-battle
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-key-change-in-production}
-      - JWT_EXPIRES_IN=24h
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:7001/"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+  #   battleship-api:
+  #     build:
+  #       context: .
+  #       dockerfile: Dockerfile
+  #       target: production
+  #     ports:
+  #       - '7001:7001'
+  #     depends_on:
+  #       - mongo
+  #       - redis
+  #     environment:
+  #       - NODE_ENV=production
+  #       - PORT=7001
+  #       - MONGO_URI=mongodb://mongo:27017/sea-battle
+  #       - REDIS_HOST=redis
+  #       - REDIS_PORT=6379
+  #       - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-key-change-in-production}
+  #       - JWT_EXPIRES_IN=24h
+  #     restart: unless-stopped
+  #     healthcheck:
+  #       test: ["CMD", "curl", "-f", "http://localhost:7001/"]
+  #       interval: 30s
+  #       timeout: 10s
+  #       retries: 3
 
   mongo:
     image: mongo:7.0
@@ -37,14 +35,14 @@ services:
       - MONGO_INITDB_ROOT_PASSWORD=password
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      test: ['CMD', 'mongosh', '--eval', "db.adminCommand('ping')"]
       interval: 30s
       timeout: 10s
       retries: 3
 
   mongo-express:
     image: mongo-express:1.0.0
-    container_name: "mongo-express"
+    container_name: 'mongo-express'
     restart: always
     environment:
       - ME_CONFIG_BASICAUTH_USERNAME=admin
@@ -71,7 +69,7 @@ services:
       - redis-data:/data
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ['CMD', 'redis-cli', 'ping']
       interval: 30s
       timeout: 10s
       retries: 3

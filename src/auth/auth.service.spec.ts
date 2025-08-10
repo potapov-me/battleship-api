@@ -107,7 +107,11 @@ describe('AuthService', () => {
           roles: ['user'],
         }),
       );
-      expect(mockAuditService.logUserAction).toHaveBeenCalledWith('user-id', 'user_login', { email });
+      expect(mockAuditService.logUserAction).toHaveBeenCalledWith(
+        'user-id',
+        'user_login',
+        { email },
+      );
     });
 
     it('should return null when user does not exist', async () => {
@@ -142,7 +146,10 @@ describe('AuthService', () => {
       const result = await service.validateUser(email, password);
 
       expect(mockUsersService.findOneByEmail).toHaveBeenCalledWith(email);
-      expect(mockedBcrypt.compare).toHaveBeenCalledWith(password, hashedPassword);
+      expect(mockedBcrypt.compare).toHaveBeenCalledWith(
+        password,
+        hashedPassword,
+      );
       expect(result).toBeNull();
     });
 
@@ -167,7 +174,10 @@ describe('AuthService', () => {
       const result = await service.validateUser(email, password);
 
       expect(mockUsersService.findOneByEmail).toHaveBeenCalledWith(email);
-      expect(mockedBcrypt.compare).toHaveBeenCalledWith(password, hashedPassword);
+      expect(mockedBcrypt.compare).toHaveBeenCalledWith(
+        password,
+        hashedPassword,
+      );
       expect(result).toEqual(
         expect.objectContaining({
           id: 'admin-id',
@@ -262,8 +272,12 @@ describe('AuthService', () => {
       mockUsersService.findOneByEmail.mockResolvedValue(null);
       mockUsersService.findOneByUsername.mockResolvedValue(null);
       mockUsersService.createUser.mockResolvedValue(mockCreatedUser);
-      mockUsersService.setEmailConfirmationToken.mockResolvedValue(mockCreatedUser);
-      mockNotificationService.sendEmailConfirmation.mockResolvedValue(undefined);
+      mockUsersService.setEmailConfirmationToken.mockResolvedValue(
+        mockCreatedUser,
+      );
+      mockNotificationService.sendEmailConfirmation.mockResolvedValue(
+        undefined,
+      );
       mockJwtService.sign.mockReturnValue('new_jwt_token');
       mockAuditService.logUserAction.mockResolvedValue(undefined);
 
@@ -271,8 +285,14 @@ describe('AuthService', () => {
 
       expect(mockUsersService.findOneByEmail).toHaveBeenCalledWith(email);
       expect(mockUsersService.findOneByUsername).toHaveBeenCalledWith(username);
-      expect(mockUsersService.createUser).toHaveBeenCalledWith(username, email, password);
-      expect(mockNotificationService.sendEmailConfirmation).toHaveBeenCalledWith(email, expect.any(String));
+      expect(mockUsersService.createUser).toHaveBeenCalledWith(
+        username,
+        email,
+        password,
+      );
+      expect(
+        mockNotificationService.sendEmailConfirmation,
+      ).toHaveBeenCalledWith(email, expect.any(String));
       expect(mockJwtService.sign).toHaveBeenCalledWith({
         email: email,
         username: 'newuser',
@@ -287,10 +307,14 @@ describe('AuthService', () => {
           },
         }),
       );
-      expect(mockAuditService.logUserAction).toHaveBeenCalledWith('new-user-id', 'user_registered', { 
-        username, 
-        email 
-      });
+      expect(mockAuditService.logUserAction).toHaveBeenCalledWith(
+        'new-user-id',
+        'user_registered',
+        {
+          username,
+          email,
+        },
+      );
     });
 
     it('should throw error when user with email already exists', async () => {
@@ -308,7 +332,7 @@ describe('AuthService', () => {
       mockUsersService.findOneByEmail.mockResolvedValue(existingUser);
 
       await expect(service.register(username, email, password)).rejects.toThrow(
-        MESSAGES.errors.userExistsEmail
+        MESSAGES.errors.userExistsEmail,
       );
 
       expect(mockUsersService.findOneByEmail).toHaveBeenCalledWith(email);
@@ -332,7 +356,7 @@ describe('AuthService', () => {
       mockUsersService.findOneByUsername.mockResolvedValue(existingUser);
 
       await expect(service.register(username, email, password)).rejects.toThrow(
-        MESSAGES.errors.userExistsUsername
+        MESSAGES.errors.userExistsUsername,
       );
 
       expect(mockUsersService.findOneByEmail).toHaveBeenCalledWith(email);
@@ -361,8 +385,12 @@ describe('AuthService', () => {
       mockUsersService.findOneByEmail.mockResolvedValue(null);
       mockUsersService.findOneByUsername.mockResolvedValue(null);
       mockUsersService.createUser.mockResolvedValue(mockCreatedUser);
-      mockUsersService.setEmailConfirmationToken.mockResolvedValue(mockCreatedUser);
-      mockNotificationService.sendEmailConfirmation.mockResolvedValue(undefined);
+      mockUsersService.setEmailConfirmationToken.mockResolvedValue(
+        mockCreatedUser,
+      );
+      mockNotificationService.sendEmailConfirmation.mockResolvedValue(
+        undefined,
+      );
       mockJwtService.sign.mockReturnValue('special_jwt_token');
       mockAuditService.logUserAction.mockResolvedValue(undefined);
 
@@ -370,7 +398,11 @@ describe('AuthService', () => {
 
       expect(mockUsersService.findOneByEmail).toHaveBeenCalledWith(email);
       expect(mockUsersService.findOneByUsername).toHaveBeenCalledWith(username);
-      expect(mockUsersService.createUser).toHaveBeenCalledWith(username, email, password);
+      expect(mockUsersService.createUser).toHaveBeenCalledWith(
+        username,
+        email,
+        password,
+      );
       expect(result).toEqual(
         expect.objectContaining({
           access_token: 'special_jwt_token',
@@ -402,8 +434,12 @@ describe('AuthService', () => {
       mockUsersService.findOneByEmail.mockResolvedValue(null);
       mockUsersService.findOneByUsername.mockResolvedValue(null);
       mockUsersService.createUser.mockResolvedValue(mockCreatedUser);
-      mockUsersService.setEmailConfirmationToken.mockResolvedValue(mockCreatedUser);
-      mockNotificationService.sendEmailConfirmation.mockResolvedValue(undefined);
+      mockUsersService.setEmailConfirmationToken.mockResolvedValue(
+        mockCreatedUser,
+      );
+      mockNotificationService.sendEmailConfirmation.mockResolvedValue(
+        undefined,
+      );
       mockJwtService.sign.mockReturnValue('longpass_jwt_token');
       mockAuditService.logUserAction.mockResolvedValue(undefined);
 
@@ -411,7 +447,11 @@ describe('AuthService', () => {
 
       expect(mockUsersService.findOneByEmail).toHaveBeenCalledWith(email);
       expect(mockUsersService.findOneByUsername).toHaveBeenCalledWith(username);
-      expect(mockUsersService.createUser).toHaveBeenCalledWith(username, email, password);
+      expect(mockUsersService.createUser).toHaveBeenCalledWith(
+        username,
+        email,
+        password,
+      );
       expect(result).toEqual(
         expect.objectContaining({
           access_token: 'longpass_jwt_token',
@@ -430,15 +470,21 @@ describe('AuthService', () => {
 
       mockUsersService.findOneByEmail.mockResolvedValue(null);
       mockUsersService.findOneByUsername.mockResolvedValue(null);
-      mockUsersService.createUser.mockRejectedValue(new Error('Database connection failed'));
+      mockUsersService.createUser.mockRejectedValue(
+        new Error('Database connection failed'),
+      );
 
       await expect(service.register(username, email, password)).rejects.toThrow(
-        'Database connection failed'
+        'Database connection failed',
       );
 
       expect(mockUsersService.findOneByEmail).toHaveBeenCalledWith(email);
       expect(mockUsersService.findOneByUsername).toHaveBeenCalledWith(username);
-      expect(mockUsersService.createUser).toHaveBeenCalledWith(username, email, password);
+      expect(mockUsersService.createUser).toHaveBeenCalledWith(
+        username,
+        email,
+        password,
+      );
     });
 
     it('should handle JWT signing errors', async () => {
@@ -464,19 +510,27 @@ describe('AuthService', () => {
       mockUsersService.findOneByEmail.mockResolvedValue(null);
       mockUsersService.findOneByUsername.mockResolvedValue(null);
       mockUsersService.createUser.mockResolvedValue(mockCreatedUser);
-      mockUsersService.setEmailConfirmationToken.mockResolvedValue(mockCreatedUser);
-      mockNotificationService.sendEmailConfirmation.mockResolvedValue(undefined);
+      mockUsersService.setEmailConfirmationToken.mockResolvedValue(
+        mockCreatedUser,
+      );
+      mockNotificationService.sendEmailConfirmation.mockResolvedValue(
+        undefined,
+      );
       mockJwtService.sign.mockImplementation(() => {
         throw new Error('JWT signing failed');
       });
 
       await expect(service.register(username, email, password)).rejects.toThrow(
-        'JWT signing failed'
+        'JWT signing failed',
       );
 
       expect(mockUsersService.findOneByEmail).toHaveBeenCalledWith(email);
       expect(mockUsersService.findOneByUsername).toHaveBeenCalledWith(username);
-      expect(mockUsersService.createUser).toHaveBeenCalledWith(username, email, password);
+      expect(mockUsersService.createUser).toHaveBeenCalledWith(
+        username,
+        email,
+        password,
+      );
     });
   });
 
@@ -496,7 +550,11 @@ describe('AuthService', () => {
 
       expect(result).toBe(true);
       expect(mockUsersService.confirmEmailByToken).toHaveBeenCalledWith(token);
-      expect(mockAuditService.logUserAction).toHaveBeenCalledWith('user-id', 'email_confirmed', { token });
+      expect(mockAuditService.logUserAction).toHaveBeenCalledWith(
+        'user-id',
+        'email_confirmed',
+        { token },
+      );
     });
 
     it('should return false for invalid token', async () => {

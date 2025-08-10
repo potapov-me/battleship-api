@@ -102,8 +102,6 @@ UserSchema.virtual('winRate').get(function () {
 });
 
 // Индексы для оптимизации запросов
-UserSchema.index({ username: 1 });
-UserSchema.index({ email: 1 });
 UserSchema.index({ rating: -1 });
 UserSchema.index({ totalGames: -1 });
 UserSchema.index({ createdAt: -1 });
