@@ -14,7 +14,11 @@ export class UsersService {
   ) {}
 
   async findOneByEmail(email: string): Promise<UserDocument | null> {
-    return this.userModel.findOne({ email }).exec();
+    try {
+      return await this.userModel.findOne({ email }).exec();
+    } catch (error) {
+      throw new Error(`Failed to find user by email: ${error.message}`);
+    }
   }
 
   async generate_password_hash(password: string): Promise<string> {
@@ -31,21 +35,29 @@ export class UsersService {
     email: string,
     password: string,
   ): Promise<UserDocument> {
-    const hashedPassword = await this.generate_password_hash(password);
+    try {
+      const hashedPassword = await this.generate_password_hash(password);
 
-    const newUser = new this.userModel({
-      username,
-      email,
-      password: hashedPassword,
-      roles: ['user'], // По умолчанию роль пользователя
-      isEmailConfirmed: false,
-    });
+      const newUser = new this.userModel({
+        username,
+        email,
+        password: hashedPassword,
+        roles: ['user'], // По умолчанию роль пользователя
+        isEmailConfirmed: false,
+      });
 
-    return await newUser.save();
+      return await newUser.save();
+    } catch (error) {
+      throw new Error(`Failed to create user: ${error.message}`);
+    }
   }
 
   async findOneByUsername(username: string): Promise<UserDocument | null> {
-    return this.userModel.findOne({ username }).exec();
+    try {
+      return await this.userModel.findOne({ username }).exec();
+    } catch (error) {
+      throw new Error(`Failed to find user by username: ${error.message}`);
+    }
   }
 
   async setEmailConfirmationToken(
@@ -62,12 +74,16 @@ export class UsersService {
   }
 
   async confirmEmailByToken(token: string): Promise<UserDocument | null> {
-    const user = await this.userModel.findOne({ emailConfirmationToken: token });
-    if (!user) {
-      return null;
+    try {
+      const user = await this.userModel.findOne({ emailConfirmationToken: token });
+      if (!user) {
+        return null;
+      }
+      user.isEmailConfirmed = true;
+      user.emailConfirmationToken = undefined;
+      return await user.save();
+    } catch (error) {
+      throw new Error(`Failed to confirm email by token: ${error.message}`);
     }
-    user.isEmailConfirmed = true;
-    user.emailConfirmationToken = undefined;
-    return user.save();
   }
 }

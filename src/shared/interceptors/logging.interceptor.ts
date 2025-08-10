@@ -23,11 +23,19 @@ export class LoggingInterceptor implements NestInterceptor {
     );
 
     return next.handle().pipe(
-      tap(() => {
-        const responseTime = Date.now() - now;
-        this.logger.log(
-          `${method} ${url} - ${responseTime}ms`,
-        );
+      tap({
+        next: () => {
+          const responseTime = Date.now() - now;
+          this.logger.log(
+            `${method} ${url} - ${responseTime}ms`,
+          );
+        },
+        error: (error) => {
+          const responseTime = Date.now() - now;
+          this.logger.error(
+            `${method} ${url} - ${responseTime}ms - Error: ${error.message}`,
+          );
+        }
       }),
     );
   }

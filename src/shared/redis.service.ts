@@ -89,9 +89,9 @@ export class RedisService {
       for (const [field, value] of Object.entries(hash)) {
         try {
           result[field] = JSON.parse(value) as T;
-        } catch {
+        } catch (parseError) {
           // Skip invalid JSON
-          this.logger.warn(`Invalid JSON for field ${field} in key ${key}`);
+          this.logger.warn(`Invalid JSON for field ${field} in key ${key}: ${parseError}`);
         }
       }
       

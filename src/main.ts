@@ -30,8 +30,7 @@ async function bootstrap() {
     }),
   );
 
-  // Global exception filter
-  app.useGlobalFilters();
+  // Global exception filter - removed as it's not properly configured
 
   // Global logging interceptor
   app.useGlobalInterceptors(new LoggingInterceptor());

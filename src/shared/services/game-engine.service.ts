@@ -2,26 +2,15 @@ import { Injectable, Logger } from '@nestjs/common';
 import { IGameEngine } from '../interfaces/game-engine.interface';
 import { Board, Cell } from '../models/board.model';
 import { Ship, ShipType, ShipPosition, ShipDirection } from '../models/ship.model';
+import { GAME_CONSTANTS } from '../constants/game.constants';
+import { AttackResult } from '../types/game.types';
 
 @Injectable()
 export class GameEngineService implements IGameEngine {
   private readonly logger = new Logger(GameEngineService.name);
 
-  private readonly SHIP_SIZES = {
-    [ShipType.CARRIER]: 5,
-    [ShipType.BATTLESHIP]: 4,
-    [ShipType.CRUISER]: 3,
-    [ShipType.SUBMARINE]: 3,
-    [ShipType.DESTROYER]: 2,
-  };
-
-  private readonly REQUIRED_SHIPS = {
-    [ShipType.CARRIER]: 1,
-    [ShipType.BATTLESHIP]: 1,
-    [ShipType.CRUISER]: 1,
-    [ShipType.SUBMARINE]: 1,
-    [ShipType.DESTROYER]: 1,
-  };
+  private readonly SHIP_SIZES = GAME_CONSTANTS.SHIP_SIZES;
+  private readonly REQUIRED_SHIPS = GAME_CONSTANTS.REQUIRED_SHIPS;
 
   generateEmptyBoard(): Board {
     const board = new Board();
@@ -29,9 +18,9 @@ export class GameEngineService implements IGameEngine {
     board.ships = [];
     board.playerId = '';
 
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < GAME_CONSTANTS.BOARD_SIZE; i++) {
       board.grid[i] = [];
-      for (let j = 0; j < 10; j++) {
+      for (let j = 0; j < GAME_CONSTANTS.BOARD_SIZE; j++) {
         const cell = new Cell();
         cell.x = i;
         cell.y = j;
@@ -44,6 +33,7 @@ export class GameEngineService implements IGameEngine {
 
   validateShipPlacement(board: Board, ships: ShipPosition[]): boolean {
     if (!ships || ships.length === 0) {
+      this.logger.warn('No ships provided for validation');
       return false;
     }
 
@@ -56,7 +46,7 @@ export class GameEngineService implements IGameEngine {
 
     for (const [shipType, required] of Object.entries(this.REQUIRED_SHIPS)) {
       if ((shipCounts.get(shipType as ShipType) || 0) !== required) {
-        this.logger.warn(`Invalid ship count for ${shipType}`);
+        this.logger.warn(`Invalid ship count for ${shipType}: expected ${required}, got ${shipCounts.get(shipType as ShipType) || 0}`);
         return false;
       }
     }
@@ -64,12 +54,18 @@ export class GameEngineService implements IGameEngine {
     // Проверяем размещение каждого корабля
     for (const ship of ships) {
       if (!this.isValidShipPlacement(board, ship)) {
+        this.logger.warn(`Invalid ship placement for ${ship.type} at (${ship.x}, ${ship.y})`);
         return false;
       }
     }
 
     // Проверяем отсутствие пересечений
-    return !this.hasShipCollisions(ships);
+    if (this.hasShipCollisions(ships)) {
+      this.logger.warn('Ship collisions detected');
+      return false;
+    }
+
+    return true;
   }
 
   private isValidShipPlacement(board: Board, ship: ShipPosition): boolean {
@@ -77,11 +73,11 @@ export class GameEngineService implements IGameEngine {
     
     // Проверяем границы
     if (ship.direction === ShipDirection.HORIZONTAL) {
-      if (ship.x + size > 10 || ship.y >= 10) {
+      if (ship.x + size > GAME_CONSTANTS.BOARD_SIZE || ship.y >= GAME_CONSTANTS.BOARD_SIZE) {
         return false;
       }
     } else {
-      if (ship.x >= 10 || ship.y + size > 10) {
+      if (ship.x >= GAME_CONSTANTS.BOARD_SIZE || ship.y + size > GAME_CONSTANTS.BOARD_SIZE) {
         return false;
       }
     }
@@ -153,9 +149,9 @@ export class GameEngineService implements IGameEngine {
     return newBoard;
   }
 
-  processAttack(board: Board, x: number, y: number): { hit: boolean; sunk: boolean; shipId?: string } {
-    if (x < 0 || x >= 10 || y < 0 || y >= 10) {
-      throw new Error('Invalid coordinates');
+  processAttack(board: Board, x: number, y: number): AttackResult {
+    if (x < 0 || x >= GAME_CONSTANTS.BOARD_SIZE || y < 0 || y >= GAME_CONSTANTS.BOARD_SIZE) {
+      throw new Error(`Invalid coordinates: coordinates must be between 0 and ${GAME_CONSTANTS.BOARD_SIZE - 1}`);
     }
 
     const cell = board.grid[x][y];

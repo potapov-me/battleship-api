@@ -1,13 +1,13 @@
 import { Injectable, Logger, NotFoundException, BadRequestException, Inject } from '@nestjs/common';
-import { IGameStateManager } from '../interfaces/game-engine.interface';
+import { IGameStateManager, type IGameEngine } from '../interfaces/game-engine.interface';
 import { RedisService } from '../redis.service';
 import { Game, GameStatus } from '../models/game.model';
-import type { IGameEngine } from '../interfaces/game-engine.interface';
+import { GAME_CONSTANTS } from '../constants/game.constants';
 
 @Injectable()
 export class GameStateManagerService implements IGameStateManager {
   private readonly logger = new Logger(GameStateManagerService.name);
-  private readonly GAME_TTL = 24 * 60 * 60; // 24 hours
+  private readonly GAME_TTL = GAME_CONSTANTS.GAME_TTL;
 
   constructor(
     private readonly redisService: RedisService,
@@ -104,33 +104,43 @@ export class GameStateManagerService implements IGameStateManager {
   }
 
   async getGamesByPlayer(playerId: string): Promise<Game[]> {
-    const gameKeys = await this.redisService.keys('game:*');
-    const games: Game[] = [];
+    try {
+      const gameKeys = await this.redisService.keys('game:*');
+      const games: Game[] = [];
 
-    for (const key of gameKeys) {
-      const game = await this.redisService.get<Game>(key);
-      if (game && 
-          ((game.player1 && game.player1.id === playerId) || 
-           (game.player2 && game.player2.id === playerId))) {
-        games.push(game);
+      for (const key of gameKeys) {
+        const game = await this.redisService.get<Game>(key);
+        if (game && 
+            ((game.player1 && game.player1.id === playerId) || 
+             (game.player2 && game.player2.id === playerId))) {
+          games.push(game);
+        }
       }
-    }
 
-    return games;
+      return games;
+    } catch (error) {
+      this.logger.error(`Failed to get games for player ${playerId}:`, error);
+      return [];
+    }
   }
 
   async getActiveGames(): Promise<Game[]> {
-    const gameKeys = await this.redisService.keys('game:*');
-    const games: Game[] = [];
+    try {
+      const gameKeys = await this.redisService.keys('game:*');
+      const games: Game[] = [];
 
-    for (const key of gameKeys) {
-      const game = await this.redisService.get<Game>(key);
-      if (game && game.status === GameStatus.ACTIVE) {
-        games.push(game);
+      for (const key of gameKeys) {
+        const game = await this.redisService.get<Game>(key);
+        if (game && game.status === GameStatus.ACTIVE) {
+          games.push(game);
+        }
       }
-    }
 
-    return games;
+      return games;
+    } catch (error) {
+      this.logger.error('Failed to get active games:', error);
+      return [];
+    }
   }
 
   private generateGameId(): string {
