@@ -20,6 +20,7 @@ describe('GameStateManagerService', () => {
     srem: jest.fn(),
     smembers: jest.fn(),
     sismember: jest.fn(),
+    expire: jest.fn(),
     getCached: jest.fn(),
     del: jest.fn(),
   };
@@ -95,6 +96,20 @@ describe('GameStateManagerService', () => {
         }),
         expect.any(Number),
       );
+      // Verify indexes were created
+      expect(mockRedisService.sadd).toHaveBeenCalledWith(
+        `player:${player1Id}:games`,
+        expect.any(String),
+      );
+      expect(mockRedisService.sadd).toHaveBeenCalledWith(
+        `player:${player2Id}:games`,
+        expect.any(String),
+      );
+      expect(mockRedisService.sadd).toHaveBeenCalledWith(
+        `status:${GameStatus.WAITING}:games`,
+        expect.any(String),
+      );
+      // active:games is updated via updateGameStatusIndexes (on start), not on creation
     });
   });
 
@@ -181,6 +196,10 @@ describe('GameStateManagerService', () => {
         mockGame,
         expect.any(Number),
       );
+      expect(mockRedisService.srem).toHaveBeenCalledWith(`status:${GameStatus.WAITING}:games`, gameId);
+      expect(mockRedisService.sadd).toHaveBeenCalledWith(`status:${GameStatus.ACTIVE}:games`, gameId);
+      // active index is updated in updateGameStatusIndexes, ensure status index was updated
+      expect(mockRedisService.sadd).toHaveBeenCalledWith(`status:${GameStatus.ACTIVE}:games`, gameId);
     });
 
     it('should throw NotFoundException for non-existent game', async () => {
@@ -231,6 +250,10 @@ describe('GameStateManagerService', () => {
         mockGame,
         expect.any(Number),
       );
+      expect(mockRedisService.srem).toHaveBeenCalledWith(`status:${GameStatus.ACTIVE}:games`, gameId);
+      expect(mockRedisService.sadd).toHaveBeenCalledWith(`status:${GameStatus.FINISHED}:games`, gameId);
+      // Ensure status index updated from ACTIVE to FINISHED
+      expect(mockRedisService.sadd).toHaveBeenCalledWith(`status:${GameStatus.FINISHED}:games`, gameId);
     });
 
     it('should end game without winner', async () => {
@@ -257,6 +280,28 @@ describe('GameStateManagerService', () => {
       mockRedisService.get.mockResolvedValue(null);
 
       await expect(service.endGame(gameId)).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('cleanupFinishedGames', () => {
+    it('should remove old finished games and cleanup indexes', async () => {
+      const gameId = 'oldGame';
+      mockRedisService.smembers.mockResolvedValue([gameId]);
+      const oldGame = new Game();
+      oldGame.id = gameId;
+      oldGame.status = GameStatus.FINISHED;
+      oldGame.finishedAt = new Date(Date.now() - 9 * 24 * 3600 * 1000);
+      oldGame.player1 = { id: 'p1' } as any;
+      oldGame.player2 = { id: 'p2' } as any;
+      mockRedisService.get.mockResolvedValue(oldGame);
+
+      await service.cleanupFinishedGames();
+
+      expect(mockRedisService.del).toHaveBeenCalledWith(`game:${gameId}`);
+      expect(mockRedisService.srem).toHaveBeenCalledWith(`player:${oldGame.player1.id}:games`, gameId);
+      expect(mockRedisService.srem).toHaveBeenCalledWith(`player:${oldGame.player2.id}:games`, gameId);
+      expect(mockRedisService.srem).toHaveBeenCalledWith(`status:${GameStatus.FINISHED}:games`, gameId);
+      expect(mockRedisService.srem).toHaveBeenCalledWith('active:games', gameId);
     });
   });
 

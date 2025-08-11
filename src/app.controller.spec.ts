@@ -122,4 +122,23 @@ describe('AppController', () => {
       await expect(appController.getReadiness()).rejects.toThrow('Application is not ready');
     });
   });
+
+  describe('health', () => {
+    it('should return healthy status when Redis check passes', async () => {
+      mockRedisService.checkHealth.mockResolvedValue(true);
+      const result = await appController.getHealth();
+
+      expect(result.status).toBe('healthy');
+      expect(result.services.redis).toBe(true);
+      expect(typeof result.timestamp).toBe('string');
+    });
+
+    it('should return unhealthy status when Redis check fails', async () => {
+      mockRedisService.checkHealth.mockResolvedValue(false);
+      const result = await appController.getHealth();
+
+      expect(result.status).toBe('unhealthy');
+      expect(result.services.redis).toBe(false);
+    });
+  });
 });
