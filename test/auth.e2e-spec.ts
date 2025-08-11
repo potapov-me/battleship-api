@@ -22,6 +22,13 @@ describe('AuthController (e2e)', () => {
   });
 
   afterAll(async () => {
+    // Очистка пользователей после завершения e2e-сьюта
+    try {
+      await userModel.deleteMany({}).exec();
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.warn('Failed to clear users after e2e tests:', (error as Error).message);
+    }
     await app.close();
   });
 
