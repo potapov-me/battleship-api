@@ -1,33 +1,58 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Logger, ServiceUnavailableException } from '@nestjs/common';
 import { AppService } from './app.service';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { RedisService } from './shared/redis.service';
 
-@ApiTags('health')
 @Controller()
 export class AppController {
-  constructor(private readonly appService: AppService) {}
+  private readonly logger = new Logger(AppController.name);
+
+  constructor(
+    private readonly appService: AppService,
+    private readonly redisService: RedisService,
+  ) {}
 
   @Get()
-  @ApiOperation({ summary: 'Health check' })
-  @ApiResponse({
-    status: 200,
-    description: 'Application is healthy',
-    schema: {
-      type: 'object',
-      properties: {
-        status: { type: 'string', example: 'ok' },
-        timestamp: { type: 'string', example: '2024-01-01T00:00:00.000Z' },
-        uptime: { type: 'number', example: 123.456 },
-        environment: { type: 'string', example: 'development' },
-      },
-    },
-  })
-  getHealth() {
+  getHello(): string {
+    return this.appService.getHello();
+  }
+
+  @Get('health')
+  async getHealth(): Promise<{
+    status: string;
+    timestamp: string;
+    services: {
+      redis: boolean;
+    };
+  }> {
+    const redisHealth = await this.redisService.checkHealth();
+    
     return {
-      status: 'ok',
+      status: redisHealth ? 'healthy' : 'unhealthy',
       timestamp: new Date().toISOString(),
-      uptime: process.uptime(),
-      environment: process.env.NODE_ENV || 'development',
+      services: {
+        redis: redisHealth,
+      },
+    };
+  }
+
+  @Get('ready')
+  async getReadiness(): Promise<{
+    status: string;
+    timestamp: string;
+    message: string;
+  }> {
+    // Активно проверяем состояние Redis на каждый запрос готовности
+    const redisHealth = await this.redisService.checkHealth();
+    
+    if (!redisHealth) {
+      this.logger.warn('Application is not ready: Redis connection is unhealthy');
+      throw new ServiceUnavailableException('Application is not ready');
+    }
+
+    return {
+      status: 'ready',
+      timestamp: new Date().toISOString(),
+      message: 'Application is ready to accept requests',
     };
   }
 }

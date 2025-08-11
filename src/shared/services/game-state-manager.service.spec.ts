@@ -16,6 +16,12 @@ describe('GameStateManagerService', () => {
     set: jest.fn(),
     get: jest.fn(),
     keys: jest.fn(),
+    sadd: jest.fn(),
+    srem: jest.fn(),
+    smembers: jest.fn(),
+    sismember: jest.fn(),
+    getCached: jest.fn(),
+    del: jest.fn(),
   };
 
   const mockGameEngine = {
@@ -27,19 +33,6 @@ describe('GameStateManagerService', () => {
   };
 
   beforeEach(async () => {
-    // Мокаем Logger для каждого теста
-    mockLogger = {
-      error: jest.fn(),
-      warn: jest.fn(),
-      log: jest.fn(),
-      debug: jest.fn(),
-      verbose: jest.fn(),
-    } as any;
-
-    jest.spyOn(Logger.prototype, 'error').mockImplementation(mockLogger.error);
-    jest.spyOn(Logger.prototype, 'warn').mockImplementation(mockLogger.warn);
-    jest.spyOn(Logger.prototype, 'log').mockImplementation(mockLogger.log);
-
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         GameStateManagerService,
@@ -52,7 +45,15 @@ describe('GameStateManagerService', () => {
           useValue: mockGameEngine,
         },
       ],
-    }).compile();
+    })
+      .setLogger({
+        log: jest.fn(),
+        error: jest.fn(),
+        warn: jest.fn(),
+        debug: jest.fn(),
+        verbose: jest.fn(),
+      })
+      .compile();
 
     service = module.get<GameStateManagerService>(GameStateManagerService);
     redisService = module.get<RedisService>(RedisService);
@@ -108,7 +109,7 @@ describe('GameStateManagerService', () => {
 
       mockRedisService.get.mockResolvedValue(mockGame);
 
-      const result = await service.joinGame(gameId, playerId);
+      const result = await service.joinGame(playerId, gameId);
 
       expect(result).toBe(true);
       expect(mockRedisService.get).toHaveBeenCalledWith(`game:${gameId}`);
@@ -135,7 +136,7 @@ describe('GameStateManagerService', () => {
 
       mockRedisService.get.mockResolvedValue(mockGame);
 
-      await expect(service.joinGame(gameId, playerId)).rejects.toThrow(
+      await expect(service.joinGame(playerId, gameId)).rejects.toThrow(
         BadRequestException,
       );
     });
@@ -151,7 +152,7 @@ describe('GameStateManagerService', () => {
 
       mockRedisService.get.mockResolvedValue(mockGame);
 
-      await expect(service.joinGame(gameId, playerId)).rejects.toThrow(
+      await expect(service.joinGame(playerId, gameId)).rejects.toThrow(
         BadRequestException,
       );
     });
@@ -165,6 +166,7 @@ describe('GameStateManagerService', () => {
       mockGame.status = GameStatus.WAITING;
       mockGame.player1 = { id: 'player1' } as any;
       mockGame.player2 = { id: 'player2' } as any;
+      mockGame.players = [{ id: 'player1' }, { id: 'player2' }];
 
       mockRedisService.get.mockResolvedValue(mockGame);
       mockRedisService.set.mockResolvedValue(undefined);
@@ -196,6 +198,7 @@ describe('GameStateManagerService', () => {
       const mockGame = new Game();
       mockGame.id = gameId;
       mockGame.status = GameStatus.ACTIVE;
+      
 
       mockRedisService.get.mockResolvedValue(mockGame);
 
@@ -212,6 +215,7 @@ describe('GameStateManagerService', () => {
       const mockGame = new Game();
       mockGame.id = gameId;
       mockGame.status = GameStatus.ACTIVE;
+      
 
       mockRedisService.get.mockResolvedValue(mockGame);
       mockRedisService.set.mockResolvedValue(undefined);
@@ -234,6 +238,7 @@ describe('GameStateManagerService', () => {
       const mockGame = new Game();
       mockGame.id = gameId;
       mockGame.status = GameStatus.ACTIVE;
+      mockGame.players = [];
 
       mockRedisService.get.mockResolvedValue(mockGame);
       mockRedisService.set.mockResolvedValue(undefined);
@@ -319,18 +324,10 @@ describe('GameStateManagerService', () => {
       mockGame2.id = 'game2';
       mockGame2.player2 = { id: playerId } as any;
 
-      mockRedisService.keys.mockResolvedValue([
-        'game:game1',
-        'game:game2',
-        'game:game3',
-      ]);
+      mockRedisService.smembers.mockResolvedValue(['game1', 'game2']);
       mockRedisService.get
         .mockResolvedValueOnce(mockGame1)
-        .mockResolvedValueOnce(mockGame2)
-        .mockResolvedValueOnce({
-          player1: { id: 'other' },
-          player2: { id: 'other2' },
-        });
+        .mockResolvedValueOnce(mockGame2);
 
       const result = await service.getGamesByPlayer(playerId);
 
@@ -342,7 +339,7 @@ describe('GameStateManagerService', () => {
     it('should return empty array when no games found', async () => {
       const playerId = 'player1';
 
-      mockRedisService.keys.mockResolvedValue([]);
+      mockRedisService.smembers.mockResolvedValue([]);
 
       const result = await service.getGamesByPlayer(playerId);
 
@@ -359,15 +356,10 @@ describe('GameStateManagerService', () => {
       mockGame2.id = 'game2';
       mockGame2.status = GameStatus.ACTIVE;
 
-      mockRedisService.keys.mockResolvedValue([
-        'game:game1',
-        'game:game2',
-        'game:game3',
-      ]);
+      mockRedisService.smembers.mockResolvedValue(['game1', 'game2']);
       mockRedisService.get
         .mockResolvedValueOnce(mockGame1)
-        .mockResolvedValueOnce(mockGame2)
-        .mockResolvedValueOnce({ status: GameStatus.WAITING });
+        .mockResolvedValueOnce(mockGame2);
 
       const result = await service.getActiveGames();
 
@@ -377,7 +369,7 @@ describe('GameStateManagerService', () => {
     });
 
     it('should return empty array when no active games found', async () => {
-      mockRedisService.keys.mockResolvedValue([]);
+      mockRedisService.smembers.mockResolvedValue([]);
 
       const result = await service.getActiveGames();
 

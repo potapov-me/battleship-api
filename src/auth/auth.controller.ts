@@ -7,6 +7,7 @@ import {
   Get,
   Param,
   Query,
+  HttpCode,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -43,6 +44,7 @@ export class AuthController {
 
   @UseGuards(EmailFormatGuard, AuthGuard('local'))
   @Post('login')
+  @HttpCode(200)
   @ApiOperation({ summary: 'Вход в систему' })
   @ApiBody({ type: LoginDto })
   @ApiResponse({
@@ -55,11 +57,12 @@ export class AuthController {
     description: 'Неверные учетные данные',
     type: ErrorResponseDto,
   })
-  login(@Body() login: LoginDto) {
-    return this.authService.login(login);
+  async login(@Body() login: LoginDto) {
+    return await this.authService.login(login);
   }
 
   @Post('register')
+  @HttpCode(201)
   @ApiOperation({ summary: 'Регистрация нового пользователя' })
   @ApiBody({ type: RegisterDto })
   @ApiResponse({
@@ -87,6 +90,7 @@ export class AuthController {
   }
 
   @Get('confirm-email')
+  @HttpCode(200)
   @ApiOperation({ summary: 'Подтверждение email по токену' })
   @ApiQuery({
     name: 'token',
@@ -126,7 +130,8 @@ export class AuthController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Post('profile')
+  @Get('profile')
+  @HttpCode(200)
   @ApiOperation({ summary: 'Получить профиль пользователя' })
   @ApiBearerAuth('JWT-auth')
   @ApiResponse({
@@ -139,15 +144,24 @@ export class AuthController {
     description: 'Неавторизованный доступ',
     type: ErrorResponseDto,
   })
-  async getProfile(@Request() req: { user: Omit<User, 'password'> }) {
-    if (!req.user.email) {
+  async getProfile(@Request() req: { user: Partial<User> & { id?: string; sub?: string } }) {
+    const email = (req.user as any)?.email;
+    const id = (req.user as any)?.id || (req.user as any)?.sub || (req.user as any)?._id;
+
+    // If neither email nor id present, return an explicit error
+    if (!email && !id) {
       return { error: MESSAGES.errors.emailMissing };
     }
-    const user = await this.usersService.findOneByEmail(req.user.email);
 
-    if (user) {
-      const { username, email, roles } = user;
-      return { username, email, roles };
+    const user = email
+      ? await this.usersService.findOneByEmail(email)
+      : await this.usersService.findOneById(String(id));
+
+    if (!user) {
+      return undefined;
     }
+
+    const { username, roles } = user as any;
+    return { username, email: (user as any).email, roles };
   }
 }

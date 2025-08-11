@@ -25,6 +25,7 @@ describe('AuthController', () => {
 
   const mockUsersService = {
     findOneByEmail: jest.fn(),
+    findOneById: jest.fn(),
     findOneByUsername: jest.fn(),
     generate_password_hash: jest.fn(),
     createUser: jest.fn(),
@@ -65,43 +66,43 @@ describe('AuthController', () => {
   });
 
   describe('login', () => {
-    it('should return an access token for valid user', () => {
+    it('should return an access token for valid user', async () => {
       const loginDto = {
         email: 'test@test.com',
         password: 'password123',
       };
       const expectedToken = { access_token: 'test_token' };
-      (authService.login as jest.Mock).mockReturnValue(expectedToken);
+      (authService.login as jest.Mock).mockResolvedValue(expectedToken);
 
-      const result = controller.login(loginDto);
+      const result = await controller.login(loginDto);
 
       expect(result).toEqual(expectedToken);
       expect(authService.login).toHaveBeenCalledWith(loginDto);
     });
 
-    it('should handle login with different user roles', () => {
+    it('should handle login with different user roles', async () => {
       const loginDto = {
         email: 'admin@test.com',
         password: 'adminpass',
       };
       const expectedToken = { access_token: 'admin_token' };
-      (authService.login as jest.Mock).mockReturnValue(expectedToken);
+      (authService.login as jest.Mock).mockResolvedValue(expectedToken);
 
-      const result = controller.login(loginDto);
+      const result = await controller.login(loginDto);
 
       expect(result).toEqual(expectedToken);
       expect(authService.login).toHaveBeenCalledWith(loginDto);
     });
 
-    it('should handle login with minimal user data', () => {
+    it('should handle login with minimal user data', async () => {
       const loginDto = {
         email: 'minimal@test.com',
         password: 'minimalpass',
       };
       const expectedToken = { access_token: 'minimal_token' };
-      (authService.login as jest.Mock).mockReturnValue(expectedToken);
+      (authService.login as jest.Mock).mockResolvedValue(expectedToken);
 
-      const result = controller.login(loginDto);
+      const result = await controller.login(loginDto);
 
       expect(result).toEqual(expectedToken);
       expect(authService.login).toHaveBeenCalledWith(loginDto);
@@ -353,7 +354,7 @@ describe('AuthController', () => {
       expect(result).toBeUndefined();
     });
 
-    it('should return an error if email is missing from user object', async () => {
+    it('should return profile by id when email is missing but id is present', async () => {
       const reqUser = {
         _id: '507f1f77bcf86cd799439011',
         id: '507f1f77bcf86cd799439011',
@@ -361,10 +362,19 @@ describe('AuthController', () => {
         roles: ['user'],
       } as any;
 
+      const dbUser = {
+        _id: '507f1f77bcf86cd799439011',
+        id: '507f1f77bcf86cd799439011',
+        username: 'test',
+        email: 'test@test.com',
+        roles: ['user'],
+      } as any;
+
+      (usersService.findOneById as jest.Mock).mockResolvedValue(dbUser);
       const result = await controller.getProfile({ user: reqUser });
 
-      expect(result).toEqual({ error: MESSAGES.errors.emailMissing });
-      expect(usersService.findOneByEmail).not.toHaveBeenCalled();
+      expect(usersService.findOneById).toHaveBeenCalledWith('507f1f77bcf86cd799439011');
+      expect(result).toEqual({ username: 'test', email: 'test@test.com', roles: ['user'] });
     });
 
     it('should return an error if user object is empty', async () => {

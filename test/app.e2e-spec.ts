@@ -19,16 +19,14 @@ describe('AppController (e2e)', () => {
     await app.close();
   });
 
-  it('/ (GET)', async () => {
+  it('/health (GET)', async () => {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-    const response = await request(app.getHttpServer()).get('/').expect(200);
+    const response = await request(app.getHttpServer()).get('/health').expect(200);
 
-    expect(response.body).toHaveProperty('status', 'ok');
+    expect(response.body).toHaveProperty('status', 'healthy');
     expect(response.body).toHaveProperty('timestamp');
-    expect(response.body).toHaveProperty('uptime');
-    expect(response.body).toHaveProperty('environment');
+    expect(response.body).toHaveProperty('services');
+    expect(response.body.services).toHaveProperty('redis', true);
     expect(typeof response.body.timestamp).toBe('string');
-    expect(typeof response.body.uptime).toBe('number');
-    expect(typeof response.body.environment).toBe('string');
   });
 });

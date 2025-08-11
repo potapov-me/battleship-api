@@ -8,6 +8,7 @@ export const MESSAGES = {
     emailNotConfirmed: 'Email не подтвержден',
     emailMissing: 'Отсутствует email в объекте пользователя',
     unauthorized: 'Не авторизован',
+    userNotFound: 'Пользователь не найден',
   },
   auth: {
     confirmEmail: {

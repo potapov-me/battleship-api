@@ -21,22 +21,12 @@ describe('AuthController (e2e)', () => {
     await app.init();
   });
 
-  beforeEach(async () => {
-    try {
-      // Очищаем базу данных перед каждым тестом
-      await userModel.deleteMany({}).exec();
-    } catch (error) {
-      console.warn('Failed to clear database before test:', error.message);
-    }
+  afterAll(async () => {
+    await app.close();
   });
 
-  afterAll(async () => {
-    try {
-      await userModel.deleteMany({}).exec();
-    } catch (error) {
-      console.warn('Failed to clear database after tests:', error.message);
-    }
-    await app.close();
+  beforeEach(async () => {
+    await userModel.deleteMany({}).exec();
   });
 
   describe('/auth/register (POST)', () => {
@@ -272,7 +262,7 @@ describe('AuthController (e2e)', () => {
       const response = await request(app.getHttpServer())
         .post('/auth/login')
         .send(loginData)
-        .expect(201); // API возвращает 201 для успешного логина
+        .expect(200); // API возвращает 201 для успешного логина
 
       expect(response.body).toHaveProperty('access_token');
       expect(typeof response.body.access_token).toBe('string');
@@ -326,7 +316,7 @@ describe('AuthController (e2e)', () => {
     });
   });
 
-  describe('/auth/profile (POST)', () => {
+  describe('/auth/profile (GET)', () => {
     let authToken: string;
 
     beforeEach(async () => {
@@ -354,9 +344,9 @@ describe('AuthController (e2e)', () => {
 
     it('should return user profile with valid token', async () => {
       const response = await request(app.getHttpServer())
-        .post('/auth/profile')
+        .get('/auth/profile')
         .set('Authorization', `Bearer ${authToken}`)
-        .expect(201); // API возвращает 201 для успешного получения профиля
+        .expect(200);
 
       expect(response.body).toHaveProperty('username');
       expect(response.body).toHaveProperty('email');
@@ -369,7 +359,7 @@ describe('AuthController (e2e)', () => {
 
     it('should return error with invalid token', async () => {
       const response = await request(app.getHttpServer())
-        .post('/auth/profile')
+        .get('/auth/profile')
         .set('Authorization', 'Bearer invalid_token')
         .expect(401);
 
@@ -379,7 +369,7 @@ describe('AuthController (e2e)', () => {
 
     it('should return error without token', async () => {
       const response = await request(app.getHttpServer())
-        .post('/auth/profile')
+        .get('/auth/profile')
         .expect(401);
 
       expect(response.body).toHaveProperty('message');
@@ -418,9 +408,9 @@ describe('AuthController (e2e)', () => {
 
       // Шаг 2: Получение профиля
       const profileResponse = await request(app.getHttpServer())
-        .post('/auth/profile')
+        .get('/auth/profile')
         .set('Authorization', `Bearer ${authToken}`)
-        .expect(201);
+        .expect(200);
 
       expect(profileResponse.body.username).toBe(registerData.username);
       expect(profileResponse.body.email).toBe(registerData.email);
@@ -434,7 +424,7 @@ describe('AuthController (e2e)', () => {
       const loginResponse = await request(app.getHttpServer())
         .post('/auth/login')
         .send(loginData)
-        .expect(201);
+        .expect(200);
 
       expect(loginResponse.body).toHaveProperty('access_token');
       expect(typeof loginResponse.body.access_token).toBe('string');

@@ -190,7 +190,7 @@ describe('AuthService', () => {
   });
 
   describe('login', () => {
-    it('should return access token for valid user', () => {
+    it('should return access token for valid user', async () => {
       const loginDto = {
         email: 'test@example.com',
         password: 'password123',
@@ -198,18 +198,25 @@ describe('AuthService', () => {
 
       const expectedToken = 'jwt_token_123';
       mockJwtService.sign.mockReturnValue(expectedToken);
-
-      const result = service.login(loginDto);
-
-      expect(mockJwtService.sign).toHaveBeenCalledWith({
+      mockUsersService.findOneByEmail.mockResolvedValue({
+        id: 'user-id',
+        username: 'testuser',
         email: loginDto.email,
       });
+
+      const result = await service.login(loginDto);
+
+      expect(mockJwtService.sign).toHaveBeenCalledWith(
+        expect.objectContaining({
+          email: loginDto.email,
+        }),
+      );
       expect(result).toEqual({
         access_token: expectedToken,
       });
     });
 
-    it('should return access token for admin user', () => {
+    it('should return access token for admin user', async () => {
       const loginDto = {
         email: 'admin@example.com',
         password: 'adminpass',
@@ -217,18 +224,25 @@ describe('AuthService', () => {
 
       const expectedToken = 'admin_jwt_token_456';
       mockJwtService.sign.mockReturnValue(expectedToken);
-
-      const result = service.login(loginDto);
-
-      expect(mockJwtService.sign).toHaveBeenCalledWith({
+      mockUsersService.findOneByEmail.mockResolvedValue({
+        id: 'admin-id',
+        username: 'admin',
         email: loginDto.email,
       });
+
+      const result = await service.login(loginDto);
+
+      expect(mockJwtService.sign).toHaveBeenCalledWith(
+        expect.objectContaining({
+          email: loginDto.email,
+        }),
+      );
       expect(result).toEqual({
         access_token: expectedToken,
       });
     });
 
-    it('should handle user with minimal data', () => {
+    it('should handle user with minimal data', async () => {
       const loginDto = {
         email: 'minimal@example.com',
         password: 'minimalpass',
@@ -236,12 +250,19 @@ describe('AuthService', () => {
 
       const expectedToken = 'minimal_jwt_token_789';
       mockJwtService.sign.mockReturnValue(expectedToken);
-
-      const result = service.login(loginDto);
-
-      expect(mockJwtService.sign).toHaveBeenCalledWith({
+      mockUsersService.findOneByEmail.mockResolvedValue({
+        id: 'minimal-id',
+        username: 'minimal',
         email: loginDto.email,
       });
+
+      const result = await service.login(loginDto);
+
+      expect(mockJwtService.sign).toHaveBeenCalledWith(
+        expect.objectContaining({
+          email: loginDto.email,
+        }),
+      );
       expect(result).toEqual({
         access_token: expectedToken,
       });

@@ -21,6 +21,14 @@ export class UsersService {
     }
   }
 
+  async findOneById(id: string): Promise<UserDocument | null> {
+    try {
+      return await this.userModel.findById(id).exec();
+    } catch (error) {
+      throw new Error(`Failed to find user by id: ${error.message}`);
+    }
+  }
+
   async generate_password_hash(password: string): Promise<string> {
     const saltRounds = parseInt(
       this.configService.get<string>('SALT_ROUNDS', '10'),

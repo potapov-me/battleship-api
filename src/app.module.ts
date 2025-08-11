@@ -9,6 +9,7 @@ import { SharedModule } from './shared/shared.module';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { GameModule } from './game/game.module';
 import { UsersModule } from './users/users.module';
+import { PlayersModule } from './players/players.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { UsersModule } from './users/users.module';
     AuthModule,
     UsersModule,
     GameModule,
+    PlayersModule,
   ],
   controllers: [AppController],
   providers: [AppService],

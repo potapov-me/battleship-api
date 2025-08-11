@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { IGameEngine } from '../interfaces/game-engine.interface';
 import { Board, Cell } from '../models/board.model';
 import {
@@ -38,7 +38,6 @@ export class GameEngineService implements IGameEngine {
 
   validateShipPlacement(board: Board, ships: ShipPosition[]): boolean {
     if (!ships || ships.length === 0) {
-      this.logger.warn('No ships provided for validation');
       return false;
     }
 
@@ -53,9 +52,6 @@ export class GameEngineService implements IGameEngine {
       const actualCount =
         shipCounts.get(shipType.toLowerCase() as ShipType) || 0;
       if (actualCount !== required) {
-        this.logger.warn(
-          `Invalid ship count for ${shipType}: expected ${required}, got ${actualCount}`,
-        );
         return false;
       }
     }
@@ -63,16 +59,17 @@ export class GameEngineService implements IGameEngine {
     // Проверяем размещение каждого корабля
     for (const ship of ships) {
       if (!this.isValidShipPlacement(board, ship)) {
-        this.logger.warn(
-          `Invalid ship placement for ${ship.type} at (${ship.x}, ${ship.y})`,
-        );
         return false;
       }
     }
 
     // Проверяем отсутствие пересечений
     if (this.hasShipCollisions(ships)) {
-      this.logger.warn('Ship collisions detected');
+      return false;
+    }
+
+    // Проверяем, что корабли не касаются друг друга
+    if (this.hasAdjacentShips(ships)) {
       return false;
     }
 
@@ -82,6 +79,11 @@ export class GameEngineService implements IGameEngine {
   private isValidShipPlacement(board: Board, ship: ShipPosition): boolean {
     const size =
       this.SHIP_SIZES[ship.type.toUpperCase() as keyof typeof this.SHIP_SIZES];
+
+    if (!size) {
+      this.logger.warn(`Unknown ship type: ${ship.type}`);
+      return false;
+    }
 
     // Проверяем границы
     if (ship.direction === ShipDirection.HORIZONTAL) {
@@ -134,9 +136,69 @@ export class GameEngineService implements IGameEngine {
     return false;
   }
 
+  private hasAdjacentShips(ships: ShipPosition[]): boolean {
+    const occupiedCells = new Set<string>();
+    for (const ship of ships) {
+      const size = this.SHIP_SIZES[ship.type.toUpperCase() as keyof typeof this.SHIP_SIZES];
+      for (let i = 0; i < size; i++) {
+        let x: number, y: number;
+        if (ship.direction === ShipDirection.HORIZONTAL) {
+          x = ship.x + i;
+          y = ship.y;
+        } else {
+          x = ship.x;
+          y = ship.y + i;
+        }
+        occupiedCells.add(`${x},${y}`);
+      }
+    }
+
+    for (const ship of ships) {
+      const size = this.SHIP_SIZES[ship.type.toUpperCase() as keyof typeof this.SHIP_SIZES];
+      const currentShipCells = new Set<string>();
+      for (let i = 0; i < size; i++) {
+        let x: number, y: number;
+        if (ship.direction === ShipDirection.HORIZONTAL) {
+          x = ship.x + i;
+          y = ship.y;
+        } else {
+          x = ship.x;
+          y = ship.y + i;
+        }
+        currentShipCells.add(`${x},${y}`);
+      }
+
+      for (let i = 0; i < size; i++) {
+        let x: number, y: number;
+        if (ship.direction === ShipDirection.HORIZONTAL) {
+          x = ship.x + i;
+          y = ship.y;
+        } else {
+          x = ship.x;
+          y = ship.y + i;
+        }
+
+        const adjacentCells = [
+          `${x + 1},${y}`, `${x - 1},${y}`,
+          `${x},${y + 1}`, `${x},${y - 1}`,
+          `${x + 1},${y + 1}`, `${x + 1},${y - 1}`,
+          `${x - 1},${y + 1}`, `${x - 1},${y - 1}`
+        ];
+
+        for (const adjacentCell of adjacentCells) {
+          if (occupiedCells.has(adjacentCell) && !currentShipCells.has(adjacentCell)) {
+            return true;
+          }
+        }
+      }
+    }
+
+    return false;
+  }
+
   placeShipsOnBoard(board: Board, ships: ShipPosition[]): Board {
     if (!this.validateShipPlacement(board, ships)) {
-      throw new Error('Invalid ship placement');
+      throw new BadRequestException('Invalid ship placement');
     }
 
     const newBoard = new Board();
@@ -182,14 +244,14 @@ export class GameEngineService implements IGameEngine {
       y < 0 ||
       y >= GAME_CONSTANTS.BOARD_SIZE
     ) {
-      throw new Error(
+      throw new BadRequestException(
         `Invalid coordinates: coordinates must be between 0 and ${GAME_CONSTANTS.BOARD_SIZE - 1}`,
       );
     }
 
     const cell = board.grid[x][y];
     if (cell.isHit) {
-      throw new Error('Cell already hit');
+      throw new BadRequestException('Cell already hit');
     }
 
     cell.isHit = true;
@@ -236,5 +298,27 @@ export class GameEngineService implements IGameEngine {
 
   checkWinCondition(board: Board): boolean {
     return board.ships.every((ship) => ship.isSunk);
+  }
+
+  // Новый метод для получения статистики игры
+  getGameStats(board: Board): {
+    totalShips: number;
+    sunkShips: number;
+    remainingShips: number;
+    hitCells: number;
+    totalCells: number;
+  } {
+    const totalShips = board.ships.length;
+    const sunkShips = board.ships.filter(ship => ship.isSunk).length;
+    const hitCells = board.grid.flat().filter(cell => cell.isHit).length;
+    const totalCells = GAME_CONSTANTS.BOARD_SIZE * GAME_CONSTANTS.BOARD_SIZE;
+
+    return {
+      totalShips,
+      sunkShips,
+      remainingShips: totalShips - sunkShips,
+      hitCells,
+      totalCells,
+    };
   }
 }

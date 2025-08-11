@@ -172,22 +172,22 @@ describe('GameEngineService', () => {
           x: 0,
           y: 2,
           type: ShipType.BATTLESHIP,
-          direction: ShipDirection.HORIZONTAL,
+          direction: ShipDirection.VERTICAL,
         },
         {
-          x: 0,
-          y: 4,
+          x: 2,
+          y: 2,
           type: ShipType.CRUISER,
           direction: ShipDirection.HORIZONTAL,
         },
         {
-          x: 0,
+          x: 6,
           y: 6,
           type: ShipType.SUBMARINE,
           direction: ShipDirection.HORIZONTAL,
         },
         {
-          x: 0,
+          x: 8,
           y: 8,
           type: ShipType.DESTROYER,
           direction: ShipDirection.HORIZONTAL,
@@ -214,22 +214,22 @@ describe('GameEngineService', () => {
           x: 0,
           y: 2,
           type: ShipType.BATTLESHIP,
-          direction: ShipDirection.HORIZONTAL,
+          direction: ShipDirection.VERTICAL,
         },
         {
-          x: 0,
-          y: 4,
+          x: 2,
+          y: 2,
           type: ShipType.CRUISER,
           direction: ShipDirection.HORIZONTAL,
         },
         {
-          x: 0,
+          x: 6,
           y: 6,
           type: ShipType.SUBMARINE,
           direction: ShipDirection.HORIZONTAL,
         },
         {
-          x: 0,
+          x: 8,
           y: 8,
           type: ShipType.DESTROYER,
           direction: ShipDirection.HORIZONTAL,
@@ -250,9 +250,9 @@ describe('GameEngineService', () => {
       expect(result.grid[4][0].shipId).toBe(ShipType.CARRIER);
 
       expect(result.grid[0][2].shipId).toBe(ShipType.BATTLESHIP);
-      expect(result.grid[1][2].shipId).toBe(ShipType.BATTLESHIP);
-      expect(result.grid[2][2].shipId).toBe(ShipType.BATTLESHIP);
-      expect(result.grid[3][2].shipId).toBe(ShipType.BATTLESHIP);
+      expect(result.grid[0][3].shipId).toBe(ShipType.BATTLESHIP);
+      expect(result.grid[0][4].shipId).toBe(ShipType.BATTLESHIP);
+      expect(result.grid[0][5].shipId).toBe(ShipType.BATTLESHIP);
     });
 
     it('should throw error for invalid ship placement', () => {
@@ -286,22 +286,22 @@ describe('GameEngineService', () => {
           x: 0,
           y: 2,
           type: ShipType.BATTLESHIP,
-          direction: ShipDirection.HORIZONTAL,
+          direction: ShipDirection.VERTICAL,
         },
         {
-          x: 0,
-          y: 4,
+          x: 2,
+          y: 2,
           type: ShipType.CRUISER,
           direction: ShipDirection.HORIZONTAL,
         },
         {
-          x: 0,
+          x: 6,
           y: 6,
           type: ShipType.SUBMARINE,
           direction: ShipDirection.HORIZONTAL,
         },
         {
-          x: 0,
+          x: 8,
           y: 8,
           type: ShipType.DESTROYER,
           direction: ShipDirection.HORIZONTAL,
@@ -329,22 +329,22 @@ describe('GameEngineService', () => {
           x: 0,
           y: 2,
           type: ShipType.BATTLESHIP,
-          direction: ShipDirection.HORIZONTAL,
+          direction: ShipDirection.VERTICAL,
         },
         {
-          x: 0,
-          y: 4,
+          x: 2,
+          y: 2,
           type: ShipType.CRUISER,
           direction: ShipDirection.HORIZONTAL,
         },
         {
-          x: 0,
+          x: 6,
           y: 6,
           type: ShipType.SUBMARINE,
           direction: ShipDirection.HORIZONTAL,
         },
         {
-          x: 0,
+          x: 8,
           y: 8,
           type: ShipType.DESTROYER,
           direction: ShipDirection.HORIZONTAL,
@@ -492,22 +492,22 @@ describe('GameEngineService', () => {
           x: 0,
           y: 2,
           type: ShipType.BATTLESHIP,
-          direction: ShipDirection.HORIZONTAL,
+          direction: ShipDirection.VERTICAL,
         },
         {
-          x: 0,
-          y: 4,
+          x: 2,
+          y: 2,
           type: ShipType.CRUISER,
           direction: ShipDirection.HORIZONTAL,
         },
         {
-          x: 0,
+          x: 6,
           y: 6,
           type: ShipType.SUBMARINE,
           direction: ShipDirection.HORIZONTAL,
         },
         {
-          x: 0,
+          x: 8,
           y: 8,
           type: ShipType.DESTROYER,
           direction: ShipDirection.HORIZONTAL,

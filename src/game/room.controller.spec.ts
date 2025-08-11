@@ -22,7 +22,15 @@ describe('RoomController', () => {
           useValue: mockRoomService,
         },
       ],
-    }).compile();
+    })
+      .setLogger({
+        log: jest.fn(),
+        error: jest.fn(),
+        warn: jest.fn(),
+        debug: jest.fn(),
+        verbose: jest.fn(),
+      })
+      .compile();
 
     controller = module.get<RoomController>(RoomController);
     roomService = module.get<RoomService>(RoomService);

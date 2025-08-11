@@ -53,9 +53,15 @@ export class AuthService {
     }
   }
 
-  login(user: LoginDto): { access_token: string } {
-    const payload = {
-      email: user.email,
+  async login(user: LoginDto): Promise<{ access_token: string }> {
+    const userFromDb = await this.usersService.findOneByEmail(user.email);
+    if (!userFromDb) {
+      throw new UnauthorizedException(MESSAGES.errors.unauthorized);
+    }
+    const payload: JwtPayload = {
+      email: userFromDb.email,
+      username: userFromDb.username,
+      sub: userFromDb.id,
     };
 
     const token = this.jwtService.sign(payload);

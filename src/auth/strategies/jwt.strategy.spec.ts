@@ -1,16 +1,24 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { JwtStrategy } from './jwt.strategy';
 import { ConfigService } from '@nestjs/config';
+import { UsersService } from '../../users/users.service';
+import { UnauthorizedException } from '@nestjs/common';
 
 describe('JwtStrategy', () => {
   let strategy: JwtStrategy;
   let configService: ConfigService;
+  let usersService: UsersService;
 
   const mockConfigService = {
     get: jest.fn(),
   };
 
+  const mockUsersService = {
+    findOneById: jest.fn(),
+  };
+
   beforeEach(async () => {
+    mockConfigService.get.mockReturnValue('test-secret');
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         JwtStrategy,
@@ -18,11 +26,16 @@ describe('JwtStrategy', () => {
           provide: ConfigService,
           useValue: mockConfigService,
         },
+        {
+          provide: UsersService,
+          useValue: mockUsersService,
+        },
       ],
     }).compile();
 
     strategy = module.get<JwtStrategy>(JwtStrategy);
     configService = module.get<ConfigService>(ConfigService);
+    usersService = module.get<UsersService>(UsersService);
   });
 
   afterEach(() => {
@@ -41,134 +54,75 @@ describe('JwtStrategy', () => {
         username: 'testuser',
       };
 
+      const mockUser = {
+        id: 'user-id',
+        email: 'test@example.com',
+        username: 'testuser',
+        password: 'hashedpassword',
+        isEmailConfirmed: true,
+        roles: ['user'],
+      };
+
+      mockUsersService.findOneById.mockResolvedValue(mockUser);
+
       const result = await strategy.validate(payload);
 
+      expect(mockUsersService.findOneById).toHaveBeenCalledWith('user-id');
       expect(result).toEqual({
         id: 'user-id',
         email: 'test@example.com',
         username: 'testuser',
+        isEmailConfirmed: true,
         roles: ['user'],
       });
     });
 
-    it('should return user data when payload has minimal data', async () => {
+    it('should throw UnauthorizedException when user not found', async () => {
       const payload = {
-        email: 'minimal@example.com',
-        sub: 'minimal-id',
-        username: 'minimaluser',
+        email: 'test@example.com',
+        sub: 'user-id',
+        username: 'testuser',
       };
 
-      const result = await strategy.validate(payload);
+      mockUsersService.findOneById.mockResolvedValue(null);
 
-      expect(result).toEqual({
-        id: 'minimal-id',
-        email: 'minimal@example.com',
-        username: 'minimaluser',
-        roles: ['user'],
-      });
+      await expect(strategy.validate(payload)).rejects.toThrow(UnauthorizedException);
+      expect(mockUsersService.findOneById).toHaveBeenCalledWith('user-id');
     });
 
-    it('should return user data for admin payload', async () => {
+    it('should throw UnauthorizedException when email not confirmed', async () => {
       const payload = {
-        email: 'admin@example.com',
-        sub: 'admin-id',
-        username: 'admin',
+        email: 'test@example.com',
+        sub: 'user-id',
+        username: 'testuser',
       };
 
-      const result = await strategy.validate(payload);
-
-      expect(result).toEqual({
-        id: 'admin-id',
-        email: 'admin@example.com',
-        username: 'admin',
+      const mockUser = {
+        id: 'user-id',
+        email: 'test@example.com',
+        username: 'testuser',
+        password: 'hashedpassword',
+        isEmailConfirmed: false,
         roles: ['user'],
-      });
-    });
-
-    it('should handle payload with empty email', async () => {
-      const payload = {
-        email: '',
-        sub: 'empty-email-id',
-        username: 'emptyuser',
       };
 
-      const result = await strategy.validate(payload);
+      mockUsersService.findOneById.mockResolvedValue(mockUser);
 
-      expect(result).toEqual({
-        id: 'empty-email-id',
-        email: '',
-        username: 'emptyuser',
-        roles: ['user'],
-      });
+      await expect(strategy.validate(payload)).rejects.toThrow(UnauthorizedException);
+      expect(mockUsersService.findOneById).toHaveBeenCalledWith('user-id');
     });
 
-    it('should handle payload without email', async () => {
+    it('should handle service errors gracefully', async () => {
       const payload = {
-        sub: 'no-email-id',
-        username: 'noemailuser',
-      } as any;
-
-      const result = await strategy.validate(payload);
-
-      expect(result).toEqual({
-        id: 'no-email-id',
-        email: undefined,
-        username: 'noemailuser',
-        roles: ['user'],
-      });
-    });
-
-    it('should handle payload with special characters in email', async () => {
-      const payload = {
-        email: 'test+tag@example.com',
-        sub: 'special-id',
-        username: 'specialuser',
+        email: 'test@example.com',
+        sub: 'user-id',
+        username: 'testuser',
       };
 
-      const result = await strategy.validate(payload);
+      mockUsersService.findOneById.mockRejectedValue(new Error('Database error'));
 
-      expect(result).toEqual({
-        id: 'special-id',
-        email: 'test+tag@example.com',
-        username: 'specialuser',
-        roles: ['user'],
-      });
-    });
-
-    it('should handle payload with very long email', async () => {
-      const payload = {
-        email:
-          'very.long.email.address.with.many.subdomains@very.long.domain.name.example.com',
-        sub: 'longemail-id',
-        username: 'longemailuser',
-      };
-
-      const result = await strategy.validate(payload);
-
-      expect(result).toEqual({
-        id: 'longemail-id',
-        email:
-          'very.long.email.address.with.many.subdomains@very.long.domain.name.example.com',
-        username: 'longemailuser',
-        roles: ['user'],
-      });
-    });
-
-    it('should handle payload with special characters in username', async () => {
-      const payload = {
-        email: 'special@example.com',
-        sub: 'specialuser-id',
-        username: 'test_user-123',
-      };
-
-      const result = await strategy.validate(payload);
-
-      expect(result).toEqual({
-        id: 'specialuser-id',
-        email: 'special@example.com',
-        username: 'test_user-123',
-        roles: ['user'],
-      });
+      await expect(strategy.validate(payload)).rejects.toThrow(UnauthorizedException);
+      expect(mockUsersService.findOneById).toHaveBeenCalledWith('user-id');
     });
   });
 });

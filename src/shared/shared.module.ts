@@ -22,46 +22,23 @@ import type {
 @Module({
   imports: [RedisModule],
   providers: [
-    MailService,
-    RedisService,
-    GameEngineService,
-    GameStateManagerService,
-    AuditService,
-    NotificationService,
+    RedisService, 
+    MailService, 
+    { provide: 'IGameEngine', useClass: GameEngineService }, 
+    { provide: 'IGameStateManager', useClass: GameStateManagerService },
+    { provide: 'IAuditService', useClass: AuditService },
+    { provide: 'INotificationService', useClass: NotificationService },
     GameValidatorService,
-    RateLimitGuard,
-    AuditInterceptor,
-    {
-      provide: 'IGameEngine',
-      useClass: GameEngineService,
-    },
-    {
-      provide: 'IGameStateManager',
-      useClass: GameStateManagerService,
-    },
-    {
-      provide: 'INotificationService',
-      useClass: NotificationService,
-    },
-    {
-      provide: 'IAuditService',
-      useClass: AuditService,
-    },
   ],
   exports: [
-    MailService,
-    RedisService,
-    GameEngineService,
-    GameStateManagerService,
-    AuditService,
-    NotificationService,
-    GameValidatorService,
-    RateLimitGuard,
-    AuditInterceptor,
-    'IGameEngine',
+    RedisService, 
+    MailService, 
+    'IGameEngine', 
     'IGameStateManager',
-    'INotificationService',
     'IAuditService',
+    'INotificationService',
+    GameValidatorService, 
+    RedisModule
   ],
 })
 export class SharedModule {}

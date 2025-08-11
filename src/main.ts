@@ -3,6 +3,7 @@ import { AppModule } from './app.module';
 import { ValidationPipe, Logger } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { LoggingInterceptor } from './shared/interceptors/logging.interceptor';
+import { GlobalExceptionFilter } from './shared/filters/global-exception.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -35,7 +36,8 @@ async function bootstrap() {
     }),
   );
 
-  // Global exception filter - removed as it's not properly configured
+  // Global exception filter
+  app.useGlobalFilters(new GlobalExceptionFilter());
 
   // Global logging interceptor
   app.useGlobalInterceptors(new LoggingInterceptor());
@@ -46,9 +48,9 @@ async function bootstrap() {
     .setDescription('API для игры "Морской бой"')
     .setVersion('1.0')
     .addTag('auth', 'Аутентификация и регистрация')
-    .addTag('rooms', 'Управление игровыми комнатами')
-    .addTag('game', 'Игровая логика')
-    .addTag('players', 'Управление игроками')
+    .addTag('Игровые комнаты', 'Управление игровыми комнатами')
+    .addTag('Игровая логика', 'Игровая логика')
+    .addTag('Игроки', 'Управление игроками')
     .addBearerAuth(
       {
         type: 'http',
