@@ -154,31 +154,9 @@ export class GameStatsController {
     try {
       this.logger.log(`Fetching leaderboard with limit ${limit}`);
 
-      // TODO: Здесь можно реализовать логику получения таблицы лидеров
-      // например, через отдельный сервис статистики
-      // const leaderboard = await this.gameService.getLeaderboard(limit);
+      const leaderboard = await this.gameService.getLeaderboard(limit);
 
-      // Временная заглушка
-      const leaderboard = [
-        {
-          rank: 1,
-          playerId: 'player1',
-          username: 'Player1',
-          wins: 25,
-          totalGames: 30,
-          winRate: 83.3,
-        },
-        {
-          rank: 2,
-          playerId: 'player2',
-          username: 'Player2',
-          wins: 20,
-          totalGames: 28,
-          winRate: 71.4,
-        },
-      ];
-
-      return { leaderboard: leaderboard.slice(0, limit) };
+      return { leaderboard };
     } catch (error) {
       this.logger.error(`Failed to get leaderboard: ${error.message}`);
       throw new BadRequestException('Не удалось получить таблицу лидеров');

@@ -16,6 +16,7 @@ import type {
   IAuditService,
   INotificationService,
 } from '../shared/interfaces/notification.interface';
+import { UsersService } from '../users/users.service';
 import { ShotResult, ShipPlacementResult } from '../shared/types/game.types';
 
 @Injectable()
@@ -29,6 +30,7 @@ export class GameService {
     @Inject('IAuditService') private readonly auditService: IAuditService,
     @Inject('INotificationService')
     private readonly notificationService: INotificationService,
+    private readonly usersService: UsersService,
   ) {}
 
   async createGame(player1Id: string, player2Id: string): Promise<Game> {
@@ -202,5 +204,17 @@ export class GameService {
 
   private areShipsPlaced(board: Board): boolean {
     return board.ships && board.ships.length > 0;
+  }
+
+  async getLeaderboard(limit: number): Promise<any[]> {
+    const users = await this.usersService.findManyByWins(limit);
+    return users.map((user, index) => ({
+      rank: index + 1,
+      playerId: user.id,
+      username: user.username,
+      wins: user.wins,
+      totalGames: user.totalGames,
+      winRate: user.winRate,
+    }));
   }
 }

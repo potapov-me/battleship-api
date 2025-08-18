@@ -29,6 +29,26 @@ export class UsersService {
     }
   }
 
+  async findManyByIds(ids: string[]): Promise<UserDocument[]> {
+    try {
+      return await this.userModel.find({ _id: { $in: ids } }).exec();
+    } catch (error) {
+      throw new Error(`Failed to find users by ids: ${error.message}`);
+    }
+  }
+
+  async findManyByWins(limit: number): Promise<UserDocument[]> {
+    try {
+      return await this.userModel
+        .find()
+        .sort({ wins: -1 })
+        .limit(limit)
+        .exec();
+    } catch (error) {
+      throw new Error(`Failed to find users by wins: ${error.message}`);
+    }
+  }
+
   async generate_password_hash(password: string): Promise<string> {
     const saltRounds = parseInt(
       this.configService.get<string>('SALT_ROUNDS', '10'),
