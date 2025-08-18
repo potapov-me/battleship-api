@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { jwtDecode } from 'jwt-decode'
 
 const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:7001'
 
@@ -18,4 +19,16 @@ export function setAuthToken(token?: string) {
 
 export function getStoredToken(): string | null {
   return localStorage.getItem('token')
+}
+
+export function getUserId(): string | null {
+  const token = getStoredToken()
+  if (!token) return null
+  try {
+    const decoded: { sub: string } = jwtDecode(token)
+    return decoded.sub
+  } catch (error) {
+    console.error('Failed to decode token', error)
+    return null
+  }
 }
