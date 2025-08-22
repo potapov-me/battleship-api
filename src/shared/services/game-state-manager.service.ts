@@ -42,7 +42,7 @@ export class GameStateManagerService implements IGameStateManager {
 
     // Сохраняем игру
     await this.redisService.set(`game:${gameId}`, game, this.GAME_TTL);
-    
+
     // Создаем индексы для быстрого поиска
     await this.createGameIndexes(gameId, player1Id, player2Id);
 
@@ -52,17 +52,33 @@ export class GameStateManagerService implements IGameStateManager {
     return gameId;
   }
 
-  private async createGameIndexes(gameId: string, player1Id: string, player2Id: string): Promise<void> {
+  private async createGameIndexes(
+    gameId: string,
+    player1Id: string,
+    player2Id: string,
+  ): Promise<void> {
     try {
       // Индекс игрока -> игры
       await this.redisService.sadd(`player:${player1Id}:games`, gameId);
       await this.redisService.sadd(`player:${player2Id}:games`, gameId);
-      await this.redisService.expire(`player:${player1Id}:games`, this.PLAYER_GAMES_TTL);
-      await this.redisService.expire(`player:${player2Id}:games`, this.PLAYER_GAMES_TTL);
+      await this.redisService.expire(
+        `player:${player1Id}:games`,
+        this.PLAYER_GAMES_TTL,
+      );
+      await this.redisService.expire(
+        `player:${player2Id}:games`,
+        this.PLAYER_GAMES_TTL,
+      );
 
       // Индекс статуса -> игры
-      await this.redisService.sadd(`status:${GameStatus.WAITING}:games`, gameId);
-      await this.redisService.expire(`status:${GameStatus.WAITING}:games`, this.ACTIVE_GAMES_TTL);
+      await this.redisService.sadd(
+        `status:${GameStatus.WAITING}:games`,
+        gameId,
+      );
+      await this.redisService.expire(
+        `status:${GameStatus.WAITING}:games`,
+        this.ACTIVE_GAMES_TTL,
+      );
 
       // Индекс активных игр
       await this.redisService.sadd('active:games', gameId);
@@ -91,7 +107,8 @@ export class GameStateManagerService implements IGameStateManager {
     }
 
     // If both slots are occupied and player is not one of them
-    const bothPlayersSet = Boolean(game.player1?.id) && Boolean(game.player2?.id);
+    const bothPlayersSet =
+      Boolean(game.player1?.id) && Boolean(game.player2?.id);
     if (bothPlayersSet) {
       throw new BadRequestException('Player not in game');
     }
@@ -121,9 +138,13 @@ export class GameStateManagerService implements IGameStateManager {
     game.startedAt = new Date();
 
     await this.updateGameState(gameId, game);
-    
+
     // Обновляем индексы
-    await this.updateGameStatusIndexes(gameId, GameStatus.WAITING, GameStatus.ACTIVE);
+    await this.updateGameStatusIndexes(
+      gameId,
+      GameStatus.WAITING,
+      GameStatus.ACTIVE,
+    );
 
     this.logger.log(`Started game ${gameId}`);
     return true;
@@ -142,22 +163,33 @@ export class GameStateManagerService implements IGameStateManager {
     }
 
     await this.updateGameState(gameId, game);
-    
+
     // Обновляем индексы
-    await this.updateGameStatusIndexes(gameId, GameStatus.ACTIVE, GameStatus.FINISHED);
+    await this.updateGameStatusIndexes(
+      gameId,
+      GameStatus.ACTIVE,
+      GameStatus.FINISHED,
+    );
 
     this.logger.log(`Ended game ${gameId} with winner ${winnerId || 'none'}`);
     return true;
   }
 
-  private async updateGameStatusIndexes(gameId: string, oldStatus: GameStatus, newStatus: GameStatus): Promise<void> {
+  private async updateGameStatusIndexes(
+    gameId: string,
+    oldStatus: GameStatus,
+    newStatus: GameStatus,
+  ): Promise<void> {
     try {
       // Удаляем из старого статуса
       await this.redisService.srem(`status:${oldStatus}:games`, gameId);
-      
+
       // Добавляем в новый статус
       await this.redisService.sadd(`status:${newStatus}:games`, gameId);
-      await this.redisService.expire(`status:${newStatus}:games`, this.ACTIVE_GAMES_TTL);
+      await this.redisService.expire(
+        `status:${newStatus}:games`,
+        this.ACTIVE_GAMES_TTL,
+      );
 
       // Обновляем индекс активных игр
       if (newStatus === GameStatus.ACTIVE) {
@@ -167,11 +199,14 @@ export class GameStateManagerService implements IGameStateManager {
       }
       await this.redisService.expire('active:games', this.ACTIVE_GAMES_TTL);
     } catch (error) {
-      this.logger.error(`Failed to update status indexes for game ${gameId}:`, error);
+      this.logger.error(
+        `Failed to update status indexes for game ${gameId}:`,
+        error,
+      );
     }
   }
 
-    async getGameState(gameId: string): Promise<Game | null> {
+  async getGameState(gameId: string): Promise<Game | null> {
     return this.redisService.get<Game>(`game:${gameId}`);
   }
 
@@ -188,7 +223,9 @@ export class GameStateManagerService implements IGameStateManager {
   async getGamesByPlayer(playerId: string): Promise<Game[]> {
     try {
       // Используем индекс для быстрого поиска
-      const gameIds = await this.redisService.smembers(`player:${playerId}:games`);
+      const gameIds = await this.redisService.smembers(
+        `player:${playerId}:games`,
+      );
       if (!gameIds || gameIds.length === 0) {
         return [];
       }
@@ -233,13 +270,16 @@ export class GameStateManagerService implements IGameStateManager {
 
   async cleanupFinishedGames(): Promise<void> {
     try {
-      const finishedGameIds = await this.redisService.smembers(`status:${GameStatus.FINISHED}:games`);
-      
+      const finishedGameIds = await this.redisService.smembers(
+        `status:${GameStatus.FINISHED}:games`,
+      );
+
       for (const gameId of finishedGameIds) {
         const game = await this.getGameState(gameId);
         if (game && game.finishedAt) {
-          const daysSinceFinished = (Date.now() - game.finishedAt.getTime()) / (1000 * 60 * 60 * 24);
-          
+          const daysSinceFinished =
+            (Date.now() - game.finishedAt.getTime()) / (1000 * 60 * 60 * 24);
+
           // Удаляем игры старше 7 дней
           if (daysSinceFinished > 7) {
             await this.deleteGame(gameId);
@@ -258,7 +298,7 @@ export class GameStateManagerService implements IGameStateManager {
 
       // Удаляем игру
       await this.redisService.del(`game:${gameId}`);
-      
+
       // Удаляем из индексов
       if (game.player1?.id) {
         await this.redisService.srem(`player:${game.player1.id}:games`, gameId);
@@ -266,10 +306,10 @@ export class GameStateManagerService implements IGameStateManager {
       if (game.player2?.id) {
         await this.redisService.srem(`player:${game.player2.id}:games`, gameId);
       }
-      
+
       await this.redisService.srem(`status:${game.status}:games`, gameId);
       await this.redisService.srem('active:games', gameId);
-      
+
       this.logger.log(`Cleaned up finished game: ${gameId}`);
     } catch (error) {
       this.logger.error(`Failed to delete game ${gameId}:`, error);

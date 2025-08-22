@@ -7,8 +7,10 @@ import { GameStatsController } from './game-stats.controller';
 import { SharedModule } from '../shared/shared.module';
 import { RedisModule } from '../shared/redis.module';
 
+import { UsersModule } from '../users/users.module';
+
 @Module({
-  imports: [SharedModule, RedisModule],
+  imports: [SharedModule, RedisModule, UsersModule],
   controllers: [GameController, RoomController, GameStatsController],
   providers: [GameService, RoomService],
   exports: [GameService, RoomService],

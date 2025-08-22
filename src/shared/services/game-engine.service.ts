@@ -139,7 +139,10 @@ export class GameEngineService implements IGameEngine {
   private hasAdjacentShips(ships: ShipPosition[]): boolean {
     const occupiedCells = new Set<string>();
     for (const ship of ships) {
-      const size = this.SHIP_SIZES[ship.type.toUpperCase() as keyof typeof this.SHIP_SIZES];
+      const size =
+        this.SHIP_SIZES[
+          ship.type.toUpperCase() as keyof typeof this.SHIP_SIZES
+        ];
       for (let i = 0; i < size; i++) {
         let x: number, y: number;
         if (ship.direction === ShipDirection.HORIZONTAL) {
@@ -154,7 +157,10 @@ export class GameEngineService implements IGameEngine {
     }
 
     for (const ship of ships) {
-      const size = this.SHIP_SIZES[ship.type.toUpperCase() as keyof typeof this.SHIP_SIZES];
+      const size =
+        this.SHIP_SIZES[
+          ship.type.toUpperCase() as keyof typeof this.SHIP_SIZES
+        ];
       const currentShipCells = new Set<string>();
       for (let i = 0; i < size; i++) {
         let x: number, y: number;
@@ -179,14 +185,21 @@ export class GameEngineService implements IGameEngine {
         }
 
         const adjacentCells = [
-          `${x + 1},${y}`, `${x - 1},${y}`,
-          `${x},${y + 1}`, `${x},${y - 1}`,
-          `${x + 1},${y + 1}`, `${x + 1},${y - 1}`,
-          `${x - 1},${y + 1}`, `${x - 1},${y - 1}`
+          `${x + 1},${y}`,
+          `${x - 1},${y}`,
+          `${x},${y + 1}`,
+          `${x},${y - 1}`,
+          `${x + 1},${y + 1}`,
+          `${x + 1},${y - 1}`,
+          `${x - 1},${y + 1}`,
+          `${x - 1},${y - 1}`,
         ];
 
         for (const adjacentCell of adjacentCells) {
-          if (occupiedCells.has(adjacentCell) && !currentShipCells.has(adjacentCell)) {
+          if (
+            occupiedCells.has(adjacentCell) &&
+            !currentShipCells.has(adjacentCell)
+          ) {
             return true;
           }
         }
@@ -309,8 +322,8 @@ export class GameEngineService implements IGameEngine {
     totalCells: number;
   } {
     const totalShips = board.ships.length;
-    const sunkShips = board.ships.filter(ship => ship.isSunk).length;
-    const hitCells = board.grid.flat().filter(cell => cell.isHit).length;
+    const sunkShips = board.ships.filter((ship) => ship.isSunk).length;
+    const hitCells = board.grid.flat().filter((cell) => cell.isHit).length;
     const totalCells = GAME_CONSTANTS.BOARD_SIZE * GAME_CONSTANTS.BOARD_SIZE;
 
     return {

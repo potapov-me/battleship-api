@@ -9,7 +9,9 @@ function createMockHost(path = '/test', method = 'GET') {
   const switchToHttp = () => ({ getResponse, getRequest });
   return {
     switchToHttp,
-  } as unknown as ArgumentsHost & { __mocks: { status: jest.Mock; json: jest.Mock } };
+  } as unknown as ArgumentsHost & {
+    __mocks: { status: jest.Mock; json: jest.Mock };
+  };
 }
 
 describe('GlobalExceptionFilter', () => {
@@ -27,7 +29,7 @@ describe('GlobalExceptionFilter', () => {
 
     filter.catch(exception, host);
     const http = host.switchToHttp();
-    const res = http.getResponse() as any;
+    const res = http.getResponse();
 
     expect(res.status).toHaveBeenCalledWith(HttpStatus.BAD_REQUEST);
     expect(res.status().json).toHaveBeenCalled();

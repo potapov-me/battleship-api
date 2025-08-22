@@ -8,6 +8,7 @@ import type { IGameEngine } from '../shared/interfaces/game-engine.interface';
 import type { IGameStateManager } from '../shared/interfaces/game-engine.interface';
 import type { IAuditService } from '../shared/interfaces/notification.interface';
 import type { INotificationService } from '../shared/interfaces/notification.interface';
+import { UsersService } from '../users/users.service';
 
 describe('GameService', () => {
   let service: GameService;
@@ -48,6 +49,18 @@ describe('GameService', () => {
     sendGameUpdate: jest.fn(),
   };
 
+  const mockUsersService = {
+    findOneByEmail: jest.fn(),
+    findOneById: jest.fn(),
+    findManyByIds: jest.fn(),
+    findManyByWins: jest.fn(),
+    generate_password_hash: jest.fn(),
+    createUser: jest.fn(),
+    findOneByUsername: jest.fn(),
+    setEmailConfirmationToken: jest.fn(),
+    confirmEmailByToken: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -67,6 +80,10 @@ describe('GameService', () => {
         {
           provide: 'INotificationService',
           useValue: mockNotificationService,
+        },
+        {
+          provide: UsersService,
+          useValue: mockUsersService,
         },
       ],
     }).compile();

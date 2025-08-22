@@ -10,7 +10,9 @@ import {
   BadRequestException,
   NotFoundException,
   Logger,
+  Req,
 } from '@nestjs/common';
+import { Request } from 'express';
 import {
   ApiTags,
   ApiOperation,
@@ -59,21 +61,23 @@ export class RoomController {
   })
   async createRoom(
     @Body() createRoomDto: CreateRoomDto,
+    @Req() req: any,
   ): Promise<RoomResponseDto> {
     try {
+      const userId = req.user.id;
       this.logger.log(
-        `Creating room for user ${createRoomDto.userId} with name: ${createRoomDto.name}`,
+        `Creating room for user ${userId} with name: ${createRoomDto.name}`,
       );
 
       const room = await this.roomService.createRoom(
-        createRoomDto.userId,
+        userId,
         createRoomDto.name,
       );
 
       this.logger.log(`Room ${room.id} created successfully`);
       return room;
     } catch (error) {
-      this.logger.error('Не удалось создать комнату');
+      this.logger.error('Не удалось создать комнату', error);
       throw new BadRequestException('Не удалось создать комнату');
     }
   }
@@ -109,17 +113,18 @@ export class RoomController {
   })
   async joinRoom(
     @Param('id') roomId: string,
-    @Body() joinRoomDto: JoinRoomDto,
+    @Req() req: any,
   ): Promise<RoomResponseDto> {
     try {
+      const userId = req.user.id;
       this.logger.log(
-        `User ${joinRoomDto.userId} attempting to join room ${roomId}`,
+        `User ${userId} attempting to join room ${roomId}`,
       );
 
-      const room = await this.roomService.joinRoom(roomId, joinRoomDto.userId);
+      const room = await this.roomService.joinRoom(roomId, userId);
 
       this.logger.log(
-        `User ${joinRoomDto.userId} successfully joined room ${roomId}`,
+        `User ${userId} successfully joined room ${roomId}`,
       );
       return room;
     } catch (error) {

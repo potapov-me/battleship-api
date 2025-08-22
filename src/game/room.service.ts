@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { RoomStatus } from './models/room.models';
 import { RedisService } from '../shared/redis.service';
+import { RoomResponseDto } from './dto/room.dto';
 
 export interface RoomEntity {
   id: string;
@@ -24,7 +25,18 @@ export class RoomService {
 
   constructor(private readonly redisService: RedisService) {}
 
-  async createRoom(userId: string, name?: string): Promise<RoomEntity> {
+  private toRoomResponseDto(room: RoomEntity): RoomResponseDto {
+    const players = [room.creatorId];
+    if (room.opponentId) {
+      players.push(room.opponentId);
+    }
+    return {
+      ...room,
+      players,
+    };
+  }
+
+  async createRoom(userId: string, name?: string): Promise<RoomResponseDto> {
     if (!userId) {
       throw new BadRequestException('userId is required');
     }
@@ -39,11 +51,11 @@ export class RoomService {
 
     const roomKey = this.getRoomKey(id);
     await this.redisService.set(roomKey, room, this.ROOM_TTL);
-    return room;
+    return this.toRoomResponseDto(room);
   }
 
-  async joinRoom(roomId: string, userId: string): Promise<RoomEntity> {
-    const room = await this.getRoom(roomId);
+  async joinRoom(roomId: string, userId: string): Promise<RoomResponseDto> {
+    const room = await this.getRoomEntity(roomId);
     if (!userId) {
       throw new BadRequestException('userId is required');
     }
@@ -62,11 +74,11 @@ export class RoomService {
     room.opponentId = userId;
     const roomKey = this.getRoomKey(roomId);
     await this.redisService.set(roomKey, room, this.ROOM_TTL);
-    return room;
+    return this.toRoomResponseDto(room);
   }
 
-  async startGame(roomId: string): Promise<RoomEntity> {
-    const room = await this.getRoom(roomId);
+  async startGame(roomId: string): Promise<RoomResponseDto> {
+    const room = await this.getRoomEntity(roomId);
     if (room.status !== RoomStatus.Waiting) {
       throw new BadRequestException('Game has already started or finished');
     }
@@ -78,23 +90,28 @@ export class RoomService {
     room.startedAt = new Date();
     const roomKey = this.getRoomKey(roomId);
     await this.redisService.set(roomKey, room, this.ROOM_TTL);
-    return room;
+    return this.toRoomResponseDto(room);
   }
 
-  async finishGame(roomId: string): Promise<RoomEntity> {
-    const room = await this.getRoom(roomId);
+  async finishGame(roomId: string): Promise<RoomResponseDto> {
+    const room = await this.getRoomEntity(roomId);
     if (room.status === RoomStatus.Finished) {
-      return room;
+      return this.toRoomResponseDto(room);
     }
 
     room.status = RoomStatus.Finished;
     room.finishedAt = new Date();
     const roomKey = this.getRoomKey(roomId);
     await this.redisService.set(roomKey, room, this.ROOM_TTL);
-    return room;
+    return this.toRoomResponseDto(room);
   }
 
-  async getRoom(roomId: string): Promise<RoomEntity> {
+  async getRoom(roomId: string): Promise<RoomResponseDto> {
+    const room = await this.getRoomEntity(roomId);
+    return this.toRoomResponseDto(room);
+  }
+
+  private async getRoomEntity(roomId: string): Promise<RoomEntity> {
     const roomKey = this.getRoomKey(roomId);
     const room = await this.redisService.get<RoomEntity>(roomKey);
     if (!room) {
@@ -103,28 +120,28 @@ export class RoomService {
     return room;
   }
 
-  async getActiveRooms(): Promise<RoomEntity[]> {
+  async getActiveRooms(): Promise<RoomResponseDto[]> {
     const roomKeys = await this.redisService.keys(`${this.ROOM_KEY_PREFIX}*`);
-    const rooms: RoomEntity[] = [];
+    const rooms: RoomResponseDto[] = [];
 
     for (const key of roomKeys) {
       const room = await this.redisService.get<RoomEntity>(key);
       if (room && room.status === RoomStatus.Waiting) {
-        rooms.push(room);
+        rooms.push(this.toRoomResponseDto(room));
       }
     }
 
     return rooms;
   }
 
-  async listRooms(): Promise<RoomEntity[]> {
+  async listRooms(): Promise<RoomResponseDto[]> {
     const roomKeys = await this.redisService.keys(`${this.ROOM_KEY_PREFIX}*`);
-    const rooms: RoomEntity[] = [];
+    const rooms: RoomResponseDto[] = [];
 
     for (const key of roomKeys) {
       const room = await this.redisService.get<RoomEntity>(key);
       if (room) {
-        rooms.push(room);
+        rooms.push(this.toRoomResponseDto(room));
       }
     }
 

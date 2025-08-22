@@ -21,7 +21,10 @@ import { SharedModule } from '../shared/shared.module';
         signOptions: {
           expiresIn: configService.get<string>('JWT_EXPIRES_IN', '24h'),
           issuer: configService.get<string>('JWT_ISSUER', 'battleship-api'),
-          audience: configService.get<string>('JWT_AUDIENCE', 'battleship-client'),
+          audience: configService.get<string>(
+            'JWT_AUDIENCE',
+            'battleship-client',
+          ),
         },
         verifyOptions: {
           algorithms: ['HS256'],

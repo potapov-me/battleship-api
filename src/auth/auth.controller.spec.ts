@@ -373,8 +373,14 @@ describe('AuthController', () => {
       (usersService.findOneById as jest.Mock).mockResolvedValue(dbUser);
       const result = await controller.getProfile({ user: reqUser });
 
-      expect(usersService.findOneById).toHaveBeenCalledWith('507f1f77bcf86cd799439011');
-      expect(result).toEqual({ username: 'test', email: 'test@test.com', roles: ['user'] });
+      expect(usersService.findOneById).toHaveBeenCalledWith(
+        '507f1f77bcf86cd799439011',
+      );
+      expect(result).toEqual({
+        username: 'test',
+        email: 'test@test.com',
+        roles: ['user'],
+      });
     });
 
     it('should return an error if user object is empty', async () => {

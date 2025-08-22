@@ -57,27 +57,34 @@ import Redis, { Cluster } from 'ioredis';
       provide: 'REDIS_CLUSTER',
       useFactory: (configService: ConfigService) => {
         // Для production можно использовать Redis Cluster
-        const clusterEnabled = configService.get<boolean>('REDIS_CLUSTER_ENABLED', false);
-        
+        const clusterEnabled = configService.get<boolean>(
+          'REDIS_CLUSTER_ENABLED',
+          false,
+        );
+
         if (clusterEnabled) {
           const password = configService.get<string>('REDIS_PASSWORD');
-          const hasPassword = typeof password === 'string' && password.length > 0;
-          const cluster = new Cluster([
+          const hasPassword =
+            typeof password === 'string' && password.length > 0;
+          const cluster = new Cluster(
+            [
+              {
+                host: configService.get<string>('REDIS_HOST', 'localhost'),
+                port: configService.get<number>('REDIS_PORT', 6379),
+              },
+            ],
             {
-              host: configService.get<string>('REDIS_HOST', 'localhost'),
-              port: configService.get<number>('REDIS_PORT', 6379),
-            }
-          ], {
-            redisOptions: {
-              password: hasPassword ? password : undefined,
-              lazyConnect: true,
-              maxRetriesPerRequest: 3,
+              redisOptions: {
+                password: hasPassword ? password : undefined,
+                lazyConnect: true,
+                maxRetriesPerRequest: 3,
+              },
+              clusterRetryStrategy: (times) => {
+                const delay = Math.min(times * 50, 2000);
+                return delay;
+              },
             },
-            clusterRetryStrategy: (times) => {
-              const delay = Math.min(times * 50, 2000);
-              return delay;
-            },
-          });
+          );
 
           cluster.on('connect', () => {
             console.log('Redis Cluster connected successfully!');
@@ -89,7 +96,7 @@ import Redis, { Cluster } from 'ioredis';
 
           return cluster;
         }
-        
+
         return null;
       },
       inject: [ConfigService],
@@ -110,7 +117,7 @@ export class RedisModule implements OnModuleDestroy {
         await this.cluster.quit();
       }
       // Avoid verbose logging in tests
-      // eslint-disable-next-line no-console
+
       if (process.env.NODE_ENV !== 'test') {
         console.log('Redis connections closed gracefully');
       }

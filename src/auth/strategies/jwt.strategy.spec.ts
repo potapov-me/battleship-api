@@ -86,7 +86,9 @@ describe('JwtStrategy', () => {
 
       mockUsersService.findOneById.mockResolvedValue(null);
 
-      await expect(strategy.validate(payload)).rejects.toThrow(UnauthorizedException);
+      await expect(strategy.validate(payload)).rejects.toThrow(
+        UnauthorizedException,
+      );
       expect(mockUsersService.findOneById).toHaveBeenCalledWith('user-id');
     });
 
@@ -108,7 +110,9 @@ describe('JwtStrategy', () => {
 
       mockUsersService.findOneById.mockResolvedValue(mockUser);
 
-      await expect(strategy.validate(payload)).rejects.toThrow(UnauthorizedException);
+      await expect(strategy.validate(payload)).rejects.toThrow(
+        UnauthorizedException,
+      );
       expect(mockUsersService.findOneById).toHaveBeenCalledWith('user-id');
     });
 
@@ -119,9 +123,13 @@ describe('JwtStrategy', () => {
         username: 'testuser',
       };
 
-      mockUsersService.findOneById.mockRejectedValue(new Error('Database error'));
+      mockUsersService.findOneById.mockRejectedValue(
+        new Error('Database error'),
+      );
 
-      await expect(strategy.validate(payload)).rejects.toThrow(UnauthorizedException);
+      await expect(strategy.validate(payload)).rejects.toThrow(
+        UnauthorizedException,
+      );
       expect(mockUsersService.findOneById).toHaveBeenCalledWith('user-id');
     });
   });

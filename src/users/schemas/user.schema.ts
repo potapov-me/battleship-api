@@ -86,6 +86,9 @@ export class User {
 
   @Prop({ type: Date })
   updatedAt: Date;
+
+  // Виртуальное поле для процента побед
+  winRate: number;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

@@ -196,10 +196,19 @@ describe('GameStateManagerService', () => {
         mockGame,
         expect.any(Number),
       );
-      expect(mockRedisService.srem).toHaveBeenCalledWith(`status:${GameStatus.WAITING}:games`, gameId);
-      expect(mockRedisService.sadd).toHaveBeenCalledWith(`status:${GameStatus.ACTIVE}:games`, gameId);
+      expect(mockRedisService.srem).toHaveBeenCalledWith(
+        `status:${GameStatus.WAITING}:games`,
+        gameId,
+      );
+      expect(mockRedisService.sadd).toHaveBeenCalledWith(
+        `status:${GameStatus.ACTIVE}:games`,
+        gameId,
+      );
       // active index is updated in updateGameStatusIndexes, ensure status index was updated
-      expect(mockRedisService.sadd).toHaveBeenCalledWith(`status:${GameStatus.ACTIVE}:games`, gameId);
+      expect(mockRedisService.sadd).toHaveBeenCalledWith(
+        `status:${GameStatus.ACTIVE}:games`,
+        gameId,
+      );
     });
 
     it('should throw NotFoundException for non-existent game', async () => {
@@ -217,7 +226,6 @@ describe('GameStateManagerService', () => {
       const mockGame = new Game();
       mockGame.id = gameId;
       mockGame.status = GameStatus.ACTIVE;
-      
 
       mockRedisService.get.mockResolvedValue(mockGame);
 
@@ -234,7 +242,6 @@ describe('GameStateManagerService', () => {
       const mockGame = new Game();
       mockGame.id = gameId;
       mockGame.status = GameStatus.ACTIVE;
-      
 
       mockRedisService.get.mockResolvedValue(mockGame);
       mockRedisService.set.mockResolvedValue(undefined);
@@ -250,10 +257,19 @@ describe('GameStateManagerService', () => {
         mockGame,
         expect.any(Number),
       );
-      expect(mockRedisService.srem).toHaveBeenCalledWith(`status:${GameStatus.ACTIVE}:games`, gameId);
-      expect(mockRedisService.sadd).toHaveBeenCalledWith(`status:${GameStatus.FINISHED}:games`, gameId);
+      expect(mockRedisService.srem).toHaveBeenCalledWith(
+        `status:${GameStatus.ACTIVE}:games`,
+        gameId,
+      );
+      expect(mockRedisService.sadd).toHaveBeenCalledWith(
+        `status:${GameStatus.FINISHED}:games`,
+        gameId,
+      );
       // Ensure status index updated from ACTIVE to FINISHED
-      expect(mockRedisService.sadd).toHaveBeenCalledWith(`status:${GameStatus.FINISHED}:games`, gameId);
+      expect(mockRedisService.sadd).toHaveBeenCalledWith(
+        `status:${GameStatus.FINISHED}:games`,
+        gameId,
+      );
     });
 
     it('should end game without winner', async () => {
@@ -298,10 +314,22 @@ describe('GameStateManagerService', () => {
       await service.cleanupFinishedGames();
 
       expect(mockRedisService.del).toHaveBeenCalledWith(`game:${gameId}`);
-      expect(mockRedisService.srem).toHaveBeenCalledWith(`player:${oldGame.player1.id}:games`, gameId);
-      expect(mockRedisService.srem).toHaveBeenCalledWith(`player:${oldGame.player2.id}:games`, gameId);
-      expect(mockRedisService.srem).toHaveBeenCalledWith(`status:${GameStatus.FINISHED}:games`, gameId);
-      expect(mockRedisService.srem).toHaveBeenCalledWith('active:games', gameId);
+      expect(mockRedisService.srem).toHaveBeenCalledWith(
+        `player:${oldGame.player1.id}:games`,
+        gameId,
+      );
+      expect(mockRedisService.srem).toHaveBeenCalledWith(
+        `player:${oldGame.player2.id}:games`,
+        gameId,
+      );
+      expect(mockRedisService.srem).toHaveBeenCalledWith(
+        `status:${GameStatus.FINISHED}:games`,
+        gameId,
+      );
+      expect(mockRedisService.srem).toHaveBeenCalledWith(
+        'active:games',
+        gameId,
+      );
     });
   });
 

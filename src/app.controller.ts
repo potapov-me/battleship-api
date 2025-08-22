@@ -1,4 +1,9 @@
-import { Controller, Get, Logger, ServiceUnavailableException } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Logger,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { AppService } from './app.service';
 import { RedisService } from './shared/redis.service';
 
@@ -25,7 +30,7 @@ export class AppController {
     };
   }> {
     const redisHealth = await this.redisService.checkHealth();
-    
+
     return {
       status: redisHealth ? 'healthy' : 'unhealthy',
       timestamp: new Date().toISOString(),
@@ -43,9 +48,11 @@ export class AppController {
   }> {
     // Активно проверяем состояние Redis на каждый запрос готовности
     const redisHealth = await this.redisService.checkHealth();
-    
+
     if (!redisHealth) {
-      this.logger.warn('Application is not ready: Redis connection is unhealthy');
+      this.logger.warn(
+        'Application is not ready: Redis connection is unhealthy',
+      );
       throw new ServiceUnavailableException('Application is not ready');
     }
 

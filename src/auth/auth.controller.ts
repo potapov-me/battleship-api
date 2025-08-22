@@ -144,9 +144,12 @@ export class AuthController {
     description: 'Неавторизованный доступ',
     type: ErrorResponseDto,
   })
-  async getProfile(@Request() req: { user: Partial<User> & { id?: string; sub?: string } }) {
+  async getProfile(
+    @Request() req: { user: Partial<User> & { id?: string; sub?: string } },
+  ) {
     const email = (req.user as any)?.email;
-    const id = (req.user as any)?.id || (req.user as any)?.sub || (req.user as any)?._id;
+    const id =
+      (req.user as any)?.id || (req.user as any)?.sub || (req.user as any)?._id;
 
     // If neither email nor id present, return an explicit error
     if (!email && !id) {

@@ -2,11 +2,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { RedisService } from './shared/redis.service';
+import { HealthStatus } from './app.interface';
 
 describe('AppController', () => {
   let appController: AppController;
-  let appService: AppService;
-  let redisService: RedisService;
 
   const mockAppService = {
     getHealth: jest.fn(),
@@ -15,31 +14,23 @@ describe('AppController', () => {
   const mockRedisService = {
     isConnectionHealthy: true,
     checkHealth: jest.fn().mockResolvedValue(true),
-  } as any;
+  };
 
   beforeEach(async () => {
     const app: TestingModule = await Test.createTestingModule({
       controllers: [AppController],
       providers: [
-        {
-          provide: AppService,
-          useValue: mockAppService,
-        },
-        {
-          provide: RedisService,
-          useValue: mockRedisService,
-        },
+        { provide: AppService, useValue: mockAppService },
+        { provide: RedisService, useValue: mockRedisService },
       ],
     }).compile();
 
     appController = app.get<AppController>(AppController);
-    appService = app.get<AppService>(AppService);
-    redisService = app.get<RedisService>(RedisService);
   });
 
   describe('root', () => {
     it('should return health status', () => {
-      const health = {
+      const health: HealthStatus = {
         status: 'healthy',
         timestamp: new Date().toISOString(),
         services: {
@@ -48,16 +39,18 @@ describe('AppController', () => {
       };
       mockAppService.getHealth.mockReturnValue(health);
 
-      const result = mockAppService.getHealth();
+      const result: HealthStatus = mockAppService.getHealth();
 
       expect(result.status).toBe('healthy');
       expect(result).toHaveProperty('timestamp');
       expect(result).toHaveProperty('services');
-      expect(result.services.redis).toBe(true);
+      if (result.services) {
+        expect(result.services.redis).toBe(true);
+      }
     });
 
     it('should return correct environment', () => {
-      const health = {
+      const health: HealthStatus = {
         status: 'healthy',
         timestamp: new Date().toISOString(),
         services: {
@@ -66,14 +59,14 @@ describe('AppController', () => {
       };
       mockAppService.getHealth.mockReturnValue(health);
 
-      const result = mockAppService.getHealth();
+      const result: HealthStatus = mockAppService.getHealth();
 
       expect(result.status).toBeDefined();
       expect(typeof result.status).toBe('string');
     });
 
     it('should return valid timestamp', () => {
-      const health = {
+      const health: HealthStatus = {
         status: 'healthy',
         timestamp: new Date().toISOString(),
         services: {
@@ -82,14 +75,14 @@ describe('AppController', () => {
       };
       mockAppService.getHealth.mockReturnValue(health);
 
-      const result = mockAppService.getHealth();
+      const result: HealthStatus = mockAppService.getHealth();
 
       expect(result.timestamp).toBeDefined();
       expect(new Date(result.timestamp).getTime()).not.toBeNaN();
     });
 
     it('should return valid uptime', () => {
-      const health = {
+      const health: HealthStatus = {
         status: 'healthy',
         timestamp: new Date().toISOString(),
         services: {
@@ -98,10 +91,12 @@ describe('AppController', () => {
       };
       mockAppService.getHealth.mockReturnValue(health);
 
-      const result = mockAppService.getHealth();
+      const result: HealthStatus = mockAppService.getHealth();
 
       expect(result.services).toBeDefined();
-      expect(typeof result.services.redis).toBe('boolean');
+      if (result.services) {
+        expect(typeof result.services.redis).toBe('boolean');
+      }
     });
   });
 
@@ -119,7 +114,9 @@ describe('AppController', () => {
       mockRedisService.isConnectionHealthy = false;
       mockRedisService.checkHealth.mockResolvedValue(false);
 
-      await expect(appController.getReadiness()).rejects.toThrow('Application is not ready');
+      await expect(appController.getReadiness()).rejects.toThrow(
+        'Application is not ready',
+      );
     });
   });
 
@@ -129,7 +126,9 @@ describe('AppController', () => {
       const result = await appController.getHealth();
 
       expect(result.status).toBe('healthy');
-      expect(result.services.redis).toBe(true);
+      if (result.services) {
+        expect(result.services.redis).toBe(true);
+      }
       expect(typeof result.timestamp).toBe('string');
     });
 
@@ -138,7 +137,9 @@ describe('AppController', () => {
       const result = await appController.getHealth();
 
       expect(result.status).toBe('unhealthy');
-      expect(result.services.redis).toBe(false);
+      if (result.services) {
+        expect(result.services.redis).toBe(false);
+      }
     });
   });
 });

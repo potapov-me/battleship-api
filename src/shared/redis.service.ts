@@ -28,8 +28,6 @@ export class RedisService implements OnModuleInit {
     }
   }
 
-  
-
   async set(key: string, value: any, ttl?: number): Promise<void> {
     if (!this.isConnectionHealthy) {
       throw new Error('Redis connection is not healthy');
@@ -110,13 +108,19 @@ export class RedisService implements OnModuleInit {
   private async scanKeys(pattern: string): Promise<string[]> {
     const keys: string[] = [];
     let cursor = '0';
-    
+
     do {
-      const result = await this.redis.scan(cursor, 'MATCH', pattern, 'COUNT', '100');
+      const result = await this.redis.scan(
+        cursor,
+        'MATCH',
+        pattern,
+        'COUNT',
+        '100',
+      );
       cursor = result[0];
       keys.push(...result[1]);
     } while (cursor !== '0');
-    
+
     return keys;
   }
 
@@ -203,7 +207,11 @@ export class RedisService implements OnModuleInit {
   }
 
   // Новые методы для кэширования
-  async getCached<T>(key: string, fallback: () => Promise<T>, ttl: number = 3600): Promise<T> {
+  async getCached<T>(
+    key: string,
+    fallback: () => Promise<T>,
+    ttl: number = 3600,
+  ): Promise<T> {
     try {
       const cached = await this.get<T>(key);
       if (cached !== null) {
@@ -228,7 +236,9 @@ export class RedisService implements OnModuleInit {
       const keys = await this.keys(pattern);
       if (keys.length > 0) {
         await this.redis.del(...keys);
-        this.logger.log(`Invalidated ${keys.length} keys matching pattern: ${pattern}`);
+        this.logger.log(
+          `Invalidated ${keys.length} keys matching pattern: ${pattern}`,
+        );
       }
     } catch (error) {
       this.logger.error(`Failed to invalidate pattern ${pattern}:`, error);
@@ -284,7 +294,10 @@ export class RedisService implements OnModuleInit {
       const result = await this.redis.sismember(key, member);
       return result === 1;
     } catch (error) {
-      this.logger.error(`Failed to sismember key ${key}, member ${member}:`, error);
+      this.logger.error(
+        `Failed to sismember key ${key}, member ${member}:`,
+        error,
+      );
       return false;
     }
   }

@@ -1,28 +1,14 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { RoomStatus } from '../models/room.models';
+import { IsOptional, IsString } from 'class-validator';
 
 export class CreateRoomDto {
-  @ApiProperty({
-    description: 'ID пользователя, создающего комнату',
-    example: '507f1f77bcf86cd799439011',
-  })
-  userId: string;
-
-  @ApiPropertyOptional({
-    description:
-      'Название комнаты (если не указано, будет создано автоматически)',
-    example: 'Комната для игры',
-  })
+  @IsOptional()
+  @IsString()
   name?: string;
 }
 
-export class JoinRoomDto {
-  @ApiProperty({
-    description: 'ID пользователя, присоединяющегося к комнате',
-    example: '507f1f77bcf86cd799439012',
-  })
-  userId: string;
-}
+export class JoinRoomDto {}
 
 export class RoomResponseDto {
   @ApiProperty({
@@ -48,6 +34,12 @@ export class RoomResponseDto {
     example: '507f1f77bcf86cd799439012',
   })
   opponentId?: string;
+
+  @ApiProperty({
+    description: 'Массив игроков в комнате',
+    example: ['507f1f77bcf86cd799439011', '507f1f77bcf86cd799439012'],
+  })
+  players: string[];
 
   @ApiProperty({
     description: 'Статус комнаты',

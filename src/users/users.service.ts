@@ -39,11 +39,7 @@ export class UsersService {
 
   async findManyByWins(limit: number): Promise<UserDocument[]> {
     try {
-      return await this.userModel
-        .find()
-        .sort({ wins: -1 })
-        .limit(limit)
-        .exec();
+      return await this.userModel.find().sort({ wins: -1 }).limit(limit).exec();
     } catch (error) {
       throw new Error(`Failed to find users by wins: ${error.message}`);
     }

@@ -26,7 +26,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     try {
       // Проверяем, что пользователь существует и активен
       const user = await this.usersService.findOneById(payload.sub);
-      
+
       if (!user) {
         throw new UnauthorizedException(MESSAGES.errors.userNotFound);
       }
@@ -36,7 +36,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       }
 
       // Возвращаем пользователя без пароля (plain object)
-      const plainUser = typeof (user as any).toObject === 'function' ? (user as any).toObject() : (user as any);
+      const plainUser =
+        typeof (user as any).toObject === 'function'
+          ? (user as any).toObject()
+          : (user as any);
       const { password, ...result } = plainUser;
       return result;
     } catch (error) {

@@ -17,7 +17,7 @@ export default function Lobby() {
   async function fetchRooms() {
     try {
       const { data } = await api.get('/rooms')
-      setRooms(data)
+      setRooms(data.rooms)
     } catch (err: any) {      const msg = err?.response?.data?.message || 'Ошибка загрузки комнат'
       setError(Array.isArray(msg) ? msg.join(' ') : String(msg))
     }

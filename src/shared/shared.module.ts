@@ -22,23 +22,23 @@ import type {
 @Module({
   imports: [RedisModule],
   providers: [
-    RedisService, 
-    MailService, 
-    { provide: 'IGameEngine', useClass: GameEngineService }, 
+    RedisService,
+    MailService,
+    { provide: 'IGameEngine', useClass: GameEngineService },
     { provide: 'IGameStateManager', useClass: GameStateManagerService },
     { provide: 'IAuditService', useClass: AuditService },
     { provide: 'INotificationService', useClass: NotificationService },
     GameValidatorService,
   ],
   exports: [
-    RedisService, 
-    MailService, 
-    'IGameEngine', 
+    RedisService,
+    MailService,
+    'IGameEngine',
     'IGameStateManager',
     'IAuditService',
     'INotificationService',
-    GameValidatorService, 
-    RedisModule
+    GameValidatorService,
+    RedisModule,
   ],
 })
 export class SharedModule {}

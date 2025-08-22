@@ -15,7 +15,9 @@ describe('PlayersController', () => {
   let controller: PlayersController;
   let service: PlayersService;
 
-  const createMockPlayerResponse = (overrides: Partial<PlayerResponseDto> = {}): PlayerResponseDto => ({
+  const createMockPlayerResponse = (
+    overrides: Partial<PlayerResponseDto> = {},
+  ): PlayerResponseDto => ({
     id: '1',
     username: 'testuser',
     email: 'test@example.com',
@@ -32,7 +34,9 @@ describe('PlayersController', () => {
     ...overrides,
   });
 
-  const createMockPlayerStats = (overrides: Partial<PlayerStatsDto> = {}): PlayerStatsDto => ({
+  const createMockPlayerStats = (
+    overrides: Partial<PlayerStatsDto> = {},
+  ): PlayerStatsDto => ({
     id: '1',
     username: 'testuser',
     totalGames: 0,
@@ -105,7 +109,9 @@ describe('PlayersController', () => {
         roles: ['player'],
       };
 
-      const expectedResponse = createMockPlayerResponse({ isEmailConfirmed: false });
+      const expectedResponse = createMockPlayerResponse({
+        isEmailConfirmed: false,
+      });
 
       mockPlayersService.createPlayer.mockResolvedValue(expectedResponse);
 
@@ -120,7 +126,11 @@ describe('PlayersController', () => {
     it('should return list of players with pagination', async () => {
       const expectedResponse: PlayerListResponseDto = {
         players: [
-          createMockPlayerResponse({ id: '1', username: 'user1', email: 'user1@example.com' }),
+          createMockPlayerResponse({
+            id: '1',
+            username: 'user1',
+            email: 'user1@example.com',
+          }),
         ],
         total: 1,
         page: 1,
@@ -134,7 +144,9 @@ describe('PlayersController', () => {
 
       const result = await controller.findAllPlayers(1, 10, 'test');
 
-      expect(service.findAllPlayers).toHaveBeenCalledWith(1, 10, { search: 'test' });
+      expect(service.findAllPlayers).toHaveBeenCalledWith(1, 10, {
+        search: 'test',
+      });
       expect(result).toEqual(expectedResponse);
     });
   });
@@ -191,7 +203,10 @@ describe('PlayersController', () => {
         email: 'updated@example.com',
       };
 
-      const expectedResponse = createMockPlayerResponse({ username: 'updateduser', email: 'updated@example.com' });
+      const expectedResponse = createMockPlayerResponse({
+        username: 'updateduser',
+        email: 'updated@example.com',
+      });
 
       mockPlayersService.updatePlayer.mockResolvedValue(expectedResponse);
 
@@ -220,7 +235,13 @@ describe('PlayersController', () => {
   describe('getPlayerStats', () => {
     it('should return player stats', async () => {
       const playerId = '1';
-      const expectedResponse = createMockPlayerStats({ totalGames: 10, wins: 7, losses: 3, winRate: 70, rating: 1200 });
+      const expectedResponse = createMockPlayerStats({
+        totalGames: 10,
+        wins: 7,
+        losses: 3,
+        winRate: 70,
+        rating: 1200,
+      });
 
       mockPlayersService.getPlayerStats.mockResolvedValue(expectedResponse);
 
@@ -290,7 +311,9 @@ describe('PlayersController', () => {
         username: 'updateduser',
       };
 
-      const expectedResponse = createMockPlayerResponse({ username: 'updateduser' });
+      const expectedResponse = createMockPlayerResponse({
+        username: 'updateduser',
+      });
 
       mockPlayersService.updatePlayer.mockResolvedValue(expectedResponse);
 

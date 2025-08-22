@@ -54,7 +54,7 @@ describe('RedisService', () => {
     }).compile();
 
     service = module.get<RedisService>(RedisService);
-    
+
     // Мокаем успешное подключение к Redis
     service.isConnectionHealthy = true;
   });
@@ -150,7 +150,9 @@ describe('RedisService', () => {
 
       service.isConnectionHealthy = false;
 
-      await expect(service.get(key)).rejects.toThrow('Redis connection is not healthy');
+      await expect(service.get(key)).rejects.toThrow(
+        'Redis connection is not healthy',
+      );
     });
   });
 
@@ -171,7 +173,9 @@ describe('RedisService', () => {
 
       service.isConnectionHealthy = false;
 
-      await expect(service.del(key)).rejects.toThrow('Redis connection is not healthy');
+      await expect(service.del(key)).rejects.toThrow(
+        'Redis connection is not healthy',
+      );
     });
   });
 
@@ -203,7 +207,9 @@ describe('RedisService', () => {
 
       service.isConnectionHealthy = false;
 
-      await expect(service.exists(key)).rejects.toThrow('Redis connection is not healthy');
+      await expect(service.exists(key)).rejects.toThrow(
+        'Redis connection is not healthy',
+      );
     });
   });
 
@@ -226,7 +232,9 @@ describe('RedisService', () => {
 
       service.isConnectionHealthy = false;
 
-      await expect(service.keys(pattern)).rejects.toThrow('Redis connection is not healthy');
+      await expect(service.keys(pattern)).rejects.toThrow(
+        'Redis connection is not healthy',
+      );
     });
   });
 
@@ -304,7 +312,9 @@ describe('RedisService', () => {
 
       service.isConnectionHealthy = false;
 
-      await expect(service.hget(key, field)).rejects.toThrow('Redis connection is not healthy');
+      await expect(service.hget(key, field)).rejects.toThrow(
+        'Redis connection is not healthy',
+      );
     });
   });
 
@@ -348,7 +358,9 @@ describe('RedisService', () => {
 
       service.isConnectionHealthy = false;
 
-      await expect(service.hgetall(key)).rejects.toThrow('Redis connection is not healthy');
+      await expect(service.hgetall(key)).rejects.toThrow(
+        'Redis connection is not healthy',
+      );
     });
   });
 
